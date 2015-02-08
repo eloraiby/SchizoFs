@@ -1,0 +1,9 @@
+(list
+    (lambda (x y)
+        ((x + y)))
+
+    (lambda (x y)
+        ((x.doSomething y)
+         (y.doThat x)
+         (x-y)
+         (x+y))))

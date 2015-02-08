@@ -1,0 +1,76 @@
+﻿{
+//
+// Schizo F# Referemce Compiler
+// Copyright (C) 2014-2015  Wael El Oraiby
+// 
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+// 
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+module Lexer
+
+open Microsoft.FSharp.Text.Lexing
+open System
+open Parser
+open Ast
+
+let lexeme = LexBuffer<_>.LexemeString
+
+let newline (lexbuf: LexBuffer<_>) =
+    lexbuf.EndPos <- lexbuf.EndPos.NextLine
+
+let positionToTuple (file, p: Position) =
+    file, p.Line, p.Column, p.AbsoluteOffset
+
+let positionToTokenData (file, p: Position) =
+    { TokenData.FileName = file; LineNumber = p.Line; Column = p.Column; Offset = p.AbsoluteOffset }
+}
+
+let int64	= ['-' '+']? ['0'-'9']+
+let digit	= ['0'-'9']
+let alpha   = ['a'-'z'] | ['A'-'Z']
+let special = '.' | '\'' | '@' | '?' | '_'
+let symbol  = (alpha | special) (alpha | special | digit)*
+let op      = ['+' '-' '~' '*' '/' '%' '|' '&' '!' '^' ',' ':' '=' '<' '>' '$']+ 
+let floatp  = digit+ '.' digit*
+let floate  =   digit+ ('.' digit* )? ('e'| 'E') ['+' '-']? digit+
+let real64  = floatp | floate 
+let white	= [' ' '\t']+
+let newline = '\r' | '\n' | "\r\n"
+
+rule read filename istream =
+	parse
+	| white         { read filename istream lexbuf }
+	| newline       { newline lexbuf; read filename istream lexbuf }
+	| int64         { INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
+	| real64        { REAL64    (Real64Node     (float (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
+    | symbol        { SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
+    | op            { OPERATOR  (OperatorNode   (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
+	| "true"        { TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) }
+	| "false"       { FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) }
+	| '"'           { read_string filename istream "" false lexbuf }
+	| '{'           { LEFT_BRACE  (positionToTokenData(filename, lexbuf.StartPos)) }
+	| '}'           { RIGHT_BRACE (positionToTokenData(filename, lexbuf.StartPos)) }
+	| '['           { LEFT_BRACK  (positionToTokenData(filename, lexbuf.StartPos)) }
+	| ']'           { RIGHT_BRACK (positionToTokenData(filename, lexbuf.StartPos)) }
+    | '('           { LEFT_PAREN  (positionToTokenData(filename, lexbuf.StartPos)) }
+    | ')'           { RIGHT_PAREN (positionToTokenData(filename, lexbuf.StartPos)) }
+	| eof           { EOF }
+	| _             { raise (Exception (sprintf "SyntaxError: Unexpected char: '%s' Line: %d Column: %d" (lexeme lexbuf) (lexbuf.StartPos.Line+1) lexbuf.StartPos.Column)) }
+and read_string filename istream str ignorequote =
+	parse
+	| '"'           { if ignorequote then (read_string filename istream (str+"\\\"") false lexbuf)
+                      else STRING (StringNode (str) (positionToTuple(filename, lexbuf.StartPos))) }
+	| '\\'          { read_string filename istream str true lexbuf }
+	| [^ '"' '\\']+ { read_string filename istream (str+(lexeme lexbuf)) false lexbuf }
+	| eof           { raise (Exception ("String is not terminated")) }
+{ }

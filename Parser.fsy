@@ -1,0 +1,76 @@
+﻿%{
+//
+// Schizo F# Referemce Compiler
+// Copyright (C) 2014-2015  Wael El Oraiby
+// 
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+// 
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+open Ast
+open System
+%}
+
+%start start
+
+%token <Node>       INT64
+%token <Node>       REAL64
+%token <Node>       STRING
+%token <Node>       SYMBOL
+%token <Node>       OPERATOR
+%token <Node>       TRUE
+%token <Node>       FALSE
+%token <TokenData>  LEFT_BRACE
+%token <TokenData>  RIGHT_BRACE
+%token <TokenData>  LEFT_BRACK
+%token <TokenData>  RIGHT_BRACK
+%token <TokenData>  LEFT_PAREN
+%token <TokenData>  RIGHT_PAREN
+%token DOT
+%token EOF
+%type <Node option> start
+
+%%
+
+start: prog                                 { $1 }
+
+prog:
+  | EOF                                     { None }
+  | exp                                     { Some $1 }
+
+atom:
+  | SYMBOL                                  { $1 }
+  | OPERATOR                                { $1 }
+  | STRING                                  { $1 }
+  | INT64                                   { $1 }
+  | REAL64                                  { $1 }
+  | TRUE                                    { $1 }
+  | FALSE                                   { $1 }
+
+exp:
+  | paren_exp                               { $1 }
+
+exp_member:
+  | atom                                    { $1 }
+  | exp                                     { $1 }
+
+exp_member_list:
+  | exp_member                              { [ $1 ] }
+  | exp_member_list exp_member              { $2 :: $1 }
+
+exp_list:
+  |                                         { [] }
+  | exp_member_list                         { $1 }
+
+paren_exp:
+  | LEFT_PAREN exp_list                     { raise (Exception (sprintf "SyntaxError: Unmatched '(' @ Line: %d Column: %d" ($1.LineNumber + 1) ($1.Column + 1))) }
+  | LEFT_PAREN exp_list RIGHT_PAREN         { ListNode (List.rev $2) $1 $3 }
