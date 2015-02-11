@@ -2,7 +2,9 @@
 module Parser
 type token = 
   | EOF
-  | DOT
+  | SC of (TokenData)
+  | RIGHT_HASH of (TokenData)
+  | LEFT_HASH of (TokenData)
   | RIGHT_PAREN of (TokenData)
   | LEFT_PAREN of (TokenData)
   | RIGHT_BRACK of (TokenData)
@@ -18,7 +20,9 @@ type token =
   | INT64 of (Node)
 type tokenId = 
     | TOKEN_EOF
-    | TOKEN_DOT
+    | TOKEN_SC
+    | TOKEN_RIGHT_HASH
+    | TOKEN_LEFT_HASH
     | TOKEN_RIGHT_PAREN
     | TOKEN_LEFT_PAREN
     | TOKEN_RIGHT_BRACK

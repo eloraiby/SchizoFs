@@ -64,6 +64,9 @@ rule read filename istream =
 	| ']'           { RIGHT_BRACK (positionToTokenData(filename, lexbuf.StartPos)) }
     | '('           { LEFT_PAREN  (positionToTokenData(filename, lexbuf.StartPos)) }
     | ')'           { RIGHT_PAREN (positionToTokenData(filename, lexbuf.StartPos)) }
+    | "#("          { LEFT_HASH   (positionToTokenData(filename, lexbuf.StartPos)) }
+    | ")#"          { RIGHT_HASH  (positionToTokenData(filename, lexbuf.StartPos)) }
+    | ';'			{ SC          (positionToTokenData(filename, lexbuf.StartPos)) }
 	| eof           { EOF }
 	| _             { raise (Exception (sprintf "SyntaxError: Unexpected char: '%s' Line: %d Column: %d" (lexeme lexbuf) (lexbuf.StartPos.Line+1) lexbuf.StartPos.Column)) }
 and read_string filename istream str ignorequote =

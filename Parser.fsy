@@ -35,7 +35,9 @@ open System
 %token <TokenData>  RIGHT_BRACK
 %token <TokenData>  LEFT_PAREN
 %token <TokenData>  RIGHT_PAREN
-%token DOT
+%token <TokenData>	LEFT_HASH
+%token <TokenData>	RIGHT_HASH
+%token <TokenData>	SC
 %token EOF
 %type <Node option> start
 

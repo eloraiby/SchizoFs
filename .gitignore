@@ -41,3 +41,18 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+bin/Debug/FSharp.Core.dll
+bin/Debug/FSharp.Core.xml
+bin/Debug/FsLexYacc.Runtime.dll
+bin/Debug/FsLexYacc.Runtime.xml
+bin/Debug/SchizoFS.exe
+bin/Debug/SchizoFS.exe.config
+bin/Debug/SchizoFS.pdb
+bin/Debug/SchizoFS.XML
+bin/Debug/tests/parser-test.schizo
+obj/Debug/SchizoFS.exe
+obj/Debug/SchizoFS.fsproj.FileListAbsolute.txt
+obj/Debug/SchizoFS.fsprojResolveAssemblyReference.cache
+obj/Debug/SchizoFS.pdb
+SchizoFS.v11.suo
+SchizoFS.v12.suo

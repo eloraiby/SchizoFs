@@ -44,7 +44,7 @@ type Node =
     | Symbol   of string        * TokenData
     | Operator of string        * TokenData
     | List     of (Node list)   * TokenData * TokenData
-    | FFI      of (Node list -> Thunk<Node>)
+    | FFI      of (Node list -> Node)
     | Special  of (Environment -> Node list -> Thunk<Environment * Node>)
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
@@ -67,8 +67,29 @@ with
 
 type Node
 with
-    member x.Eval (env: Environment, l: Node list) : Thunk<Environment * Node> =
-        failwith "Unimplemented"
+    member x.Eval (env: Environment) : Thunk<Environment * Node> =
+        match x with
+        | Bool _
+        | SInt64 _
+        | Real64 _
+        | String _
+        | FFI _ 
+        | Special _ -> Thunk<_>.Final (env, x)
+        | Symbol (s, td) -> Thunk<_>.Final (env, env.[s])
+        | Operator (op, td) -> failwith (sprintf "Unexpected operator %s @ line %d, column %d" op td.LineNumber td.Column)
+        | List (nl, tds, tde)  ->
+            match nl with
+            | []     -> Thunk.Final (env, x)
+            | h :: t ->
+                let evalList (env: Environment) (nl: Node list) =
+                    nl
+                    |> List.map(fun n -> snd (n.Eval env).Value)
+                                   
+                match (h.Eval env).Value with
+                | env, FFI f     -> Thunk.Final (env, f (evalList env t))
+                | env, Special f -> f env t
+                | _ -> failwith "Should never reach this point"
+       
 
 let BoolNode     b   (f, ln, col, off)    = Bool     (b,  (TokenData.New(f, ln, col, off)))
 let SInt64Node   si  (f, ln, col, off)    = SInt64   (si, (TokenData.New(f, ln, col, off)))
@@ -79,6 +100,7 @@ let OperatorNode op  (f, ln, col, off)    = Operator (op, (TokenData.New(f, ln, 
 let ListNode     l   td1 td2              = List (l,  td1, td2)
 
 type OpType =
+    | Undefined
     | UnOp0 
     | UnOp1 
     | UnOp2 
@@ -100,20 +122,28 @@ type OpType =
     | BinOp8
     | BinOp9
 
-
 type ParserEnv = Map<string, OpType * TokenData>
 
 type ParserState() =
     let stack   = ref []
     let current = ref Map.empty
     
-    member x.CurrentEnv : ParserEnv = (!stack).Head
+    member x.CurrentEnv : ParserEnv =
+        !current
+
     member x.PushCurrentEnv()       =
         stack := !current :: !stack
+
     member x.PopEnv()   =
-        stack := (!stack).Tail
+        current := (!stack).Head
+        stack   := (!stack).Tail
+
     member x.AddOperator(s: string, op: OpType, td: TokenData)  =
         current := (!current).Add(s, (op, td))
+
+    member x.FindOperator(s: string) =
+        (!current).TryFind s
+
 
 
 (*
