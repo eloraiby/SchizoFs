@@ -419,7 +419,7 @@ let _fsyacc_reductions ()  =    [|
                 (
                    (
 # 78 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
-                                                                   ListNode (List.rev _2) _1 _3 
+                                                                   ListNode ((List.rev _2), _1) 
                    )
 # 78 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'paren_exp));

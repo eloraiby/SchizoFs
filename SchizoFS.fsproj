@@ -76,6 +76,7 @@
     <Compile Include="Ast.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Lexer.fs" />
+    <Compile Include="Special.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <None Include="tests\parser-test.schizo" />

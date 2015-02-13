@@ -43,9 +43,9 @@ type Node =
     | String   of string        * TokenData
     | Symbol   of string        * TokenData
     | Operator of string        * TokenData
-    | List     of (Node list)   * TokenData * TokenData
+    | List     of Node list     * TokenData
     | FFI      of (Node list -> Node)
-    | Special  of (Environment -> Node list -> Thunk<Environment * Node>)
+    | Special  of (Environment -> (Node list * TokenData) -> Thunk<Environment * Node>)
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
 and Environment = Map<string, Node>
@@ -64,40 +64,28 @@ with
         match x with
         | Continue f -> f()
         | _          -> x
-
+  
 type Node
 with
-    member x.Eval (env: Environment) : Thunk<Environment * Node> =
+    member x.TokenData =
         match x with
-        | Bool _
-        | SInt64 _
-        | Real64 _
-        | String _
-        | FFI _ 
-        | Special _ -> Thunk<_>.Final (env, x)
-        | Symbol (s, td) -> Thunk<_>.Final (env, env.[s])
-        | Operator (op, td) -> failwith (sprintf "Unexpected operator %s @ line %d, column %d" op td.LineNumber td.Column)
-        | List (nl, tds, tde)  ->
-            match nl with
-            | []     -> Thunk.Final (env, x)
-            | h :: t ->
-                let evalList (env: Environment) (nl: Node list) =
-                    nl
-                    |> List.map(fun n -> snd (n.Eval env).Value)
-                                   
-                match (h.Eval env).Value with
-                | env, FFI f     -> Thunk.Final (env, f (evalList env t))
-                | env, Special f -> f env t
-                | _ -> failwith "Should never reach this point"
-       
-
+        | Bool     (_, td) -> td
+        | SInt64   (_, td) -> td
+        | Real64   (_, td) -> td 
+        | String   (_, td) -> td
+        | Symbol   (_, td) -> td
+        | Operator (_, td) -> td
+        | List     (_, td) -> td
+        | FFI      _       -> failwith "FFI has no token data"
+        | Special  _       -> failwith "Special has no token data"
+        
 let BoolNode     b   (f, ln, col, off)    = Bool     (b,  (TokenData.New(f, ln, col, off)))
 let SInt64Node   si  (f, ln, col, off)    = SInt64   (si, (TokenData.New(f, ln, col, off)))
 let Real64Node   r   (f, ln, col, off)    = Real64   (r,  (TokenData.New(f, ln, col, off)))
 let StringNode   s   (f, ln, col, off)    = String   (s,  (TokenData.New(f, ln, col, off)))
 let SymbolNode   sym (f, ln, col, off)    = Symbol   (sym,(TokenData.New(f, ln, col, off)))
 let OperatorNode op  (f, ln, col, off)    = Operator (op, (TokenData.New(f, ln, col, off)))
-let ListNode     l   td1 td2              = List (l,  td1, td2)
+let ListNode     l                        = List l
 
 type OpType =
     | Undefined
