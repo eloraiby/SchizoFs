@@ -36,6 +36,7 @@ with
         Offset      = offset
     }
 
+[<CustomEquality; CustomComparison>]
 type Node =
     | Bool     of bool          * TokenData
     | SInt64   of int64         * TokenData
@@ -44,10 +45,34 @@ type Node =
     | Symbol   of string        * TokenData
     | Operator of string        * TokenData
     | List     of Node list     * TokenData
-    | FFI      of (Node list -> Node)
+    | FFI      of (Node list * TokenData -> Node)
     | Special  of (Environment -> (Node list * TokenData) -> Thunk<Environment * Node>)
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
+    override x.Equals(obj) =
+        match obj with
+        | :? Node as y ->
+            match x, y with
+            | Node.Bool   (b0, _), Node.Bool   (b1, _) -> b0 = b1
+            | Node.SInt64 (i0, _), Node.SInt64 (i1, _) -> i0 = i1
+            | Node.Real64 (r0, _), Node.Real64 (r1, _) -> r0 = r1
+            | Node.String (s0, _), Node.String (s1, _) -> s0 = s1
+            | Node.Symbol (s0, _), Node.Symbol (s1, _) -> s0 = s1
+            | Node.List   (l0, _), Node.List   (l1, _) -> l0 = l1
+            | Node.Operator (op0, _),  Node.Operator (op1, _)   -> op0 = op1
+            | Node.FFI     f0,     Node.FFI     f1     -> failwith (sprintf "Cannot compare functions!")
+            | Node.Special f0,     Node.Special f1     -> failwith (sprintf "Cannot compare macros!")
+            | _ -> false
+        | _ -> false
+    
+    override x.GetHashCode() = hash x
+
+    interface System.IComparable with
+      member x.CompareTo yobj =
+          match yobj with
+          | :? Node as y -> compare x y
+          | _ -> invalidArg "yobj" "cannot compare values of different types"  
+                    
 and Environment = Map<string, Node>
 and Thunk<'A> =
     | Continue of (unit -> Thunk<'A>)
@@ -79,6 +104,7 @@ with
         | FFI      _       -> failwith "FFI has no token data"
         | Special  _       -> failwith "Special has no token data"
         
+     
 let BoolNode     b   (f, ln, col, off)    = Bool     (b,  (TokenData.New(f, ln, col, off)))
 let SInt64Node   si  (f, ln, col, off)    = SInt64   (si, (TokenData.New(f, ln, col, off)))
 let Real64Node   r   (f, ln, col, off)    = Real64   (r,  (TokenData.New(f, ln, col, off)))

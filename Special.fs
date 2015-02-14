@@ -30,7 +30,7 @@ module private BuiltIn =
         | h :: t ->
                                    
             match (evalOne env h).Value with
-            | env, FFI f     -> Thunk.Final (env, f (evalList env t))
+            | env, FFI f     -> Thunk.Final (env, f ((evalList env t), td))
             | env, Special f -> f env (t, td)
             | _ -> failwith "Should never reach this point"
 
@@ -91,5 +91,7 @@ let getBuiltIns =
         "macro",  Node.Special (lambdaAndMacro EvalArg.RAW)
         "define", Node.Special define
         "if",     Node.Special if_then_else
+        "eval",   Node.Special eval
     |]
+    |> Map.ofArray
 
