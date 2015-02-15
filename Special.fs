@@ -34,7 +34,7 @@ module private BuiltIn =
             match (evalOne env h).Value with
             | env, FFI f     -> Thunk.Final (env, f ((evalList env t), td))
             | env, Special f -> f env (t, td)
-            | env, Lambda (e, syms, body, td) ->
+            | env, Lambda ({ EvalArgs = e; ArgSymbols = syms; Body = body; VarArgs = varargs }, td) ->
                 let symList = syms
                               |> List.map(function
                                   | Node.Symbol (s, td) -> s
@@ -80,10 +80,10 @@ module private BuiltIn =
             | x                         -> failwith (sprintf "if expression @ line %d, column %d expects a boolean condition, got %A" td.LineNumber td.Column x)
         | x -> failwith (sprintf "if expression @ line %d, column %d should have the form <if (cond) then (then body) else (else body)>, got %A" td.LineNumber td.Column x)
 
-    let lambdaAndMacro (evalArgs: EvalArg) (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> = 
+    let lambdaAndMacro (evalArgs: EvalArgs) (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> = 
         match nl with
         | Node.List (args, _) :: Node.List (body, _) :: [] ->
-            Thunk.Final(env, Node.Lambda (evalArgs, args, body, td))
+            Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = args; VarArgs = []; Body = body }, td))
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
 open BuiltIn
@@ -91,8 +91,8 @@ open BuiltIn
 
 let getBuiltIns =
     [|
-        "lambda", Node.Special (lambdaAndMacro EvalArg.EVAL)
-        "macro",  Node.Special (lambdaAndMacro EvalArg.RAW)
+        "lambda", Node.Special (lambdaAndMacro EvalArgs.EVAL)
+        "macro",  Node.Special (lambdaAndMacro EvalArgs.RAW)
         "define", Node.Special define
         "if",     Node.Special if_then_else
         "eval",   Node.Special eval
