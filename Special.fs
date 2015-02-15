@@ -17,7 +17,7 @@ module private BuiltIn =
         | Lambda _          -> Thunk<_>.Final (env, n)
         | Symbol (s, td)    ->
             match env.TryFind s with
-            | Some v -> Thunk<_>.Final (env, v)
+            | Some v -> Thunk<_>.Final (env, snd (evalOne env v).Value)
             | None   -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
         | Operator (op, td) -> failwith (sprintf "Unexpected operator %s @ line %d, column %d" op td.LineNumber td.Column)
         | List (nl, td)     -> apply env (nl, td)
