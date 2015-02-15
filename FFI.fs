@@ -101,6 +101,43 @@ module private BuiltIn =
             | Node.String (s, _) :: [] -> Node.Symbol (s, td)
             | x -> failwith (sprintf "<symbol.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
 
+    module InOut =
+        let rec write (nl: Node list, td: TokenData) : Node =
+            match nl with
+            | h :: t ->
+                let rec writeOne n =
+                    match n with
+                    | Node.Bool   (b, _)    -> printf "%b" b
+                    | Node.SInt64 (i, _)    -> printf "%d" i
+                    | Node.Real64 (r, _)    -> printf "%f" r 
+                    | Node.String (s, _)    -> printf "\"%s\"" s  
+                    | Node.Symbol (s, _)    -> printf "%s" s 
+                    | Node.List   (l, _)    ->
+                        match l with
+                        | [] -> printf "nil"
+                        | l ->
+                            l |> List.fold (fun acc n ->
+                                                if acc then
+                                                    printf " "
+                                                    writeOne n
+                                                    true
+                                                else writeOne n
+                                                     true) false
+                               |> ignore
+                    | Node.Operator (op, _) -> printf "<operator %s>" op 
+                    | Node.FFI     _        -> printf "<ffi>"
+                    | Node.Special _        -> printf "<special>"
+                    | Node.Lambda  _        -> printf "<lambda>"
+                
+                printf "("
+                writeOne h
+                match t with
+                | [] -> ()
+                | _  -> printf " "
+                        t |> List.map writeOne |> ignore
+                printf ")"
+            | [] -> printf "nil"
+            Node.List ([], td)
 
 open BuiltIn
 
@@ -150,6 +187,8 @@ let getBuiltIns =
 
         "symbol.to_string", Node.FFI Symbol.toString
         "symbol.from",      Node.FFI Symbol.from
+
+        "io.write",         Node.FFI InOut.write
     |]
     |> Map.ofArray
 

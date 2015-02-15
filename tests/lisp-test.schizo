@@ -1,0 +1,5 @@
+﻿((lambda ()
+    ((io.write "hello")
+     (io.write " World"))
+  )
+())

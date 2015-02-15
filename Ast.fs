@@ -36,6 +36,10 @@ with
         Offset      = offset
     }
 
+type EvalArg =
+    | EVAL
+    | RAW
+
 [<CustomEquality; CustomComparison>]
 type Node =
     | Bool     of bool          * TokenData
@@ -47,6 +51,7 @@ type Node =
     | List     of Node list     * TokenData
     | FFI      of (Node list * TokenData -> Node)
     | Special  of (Environment -> (Node list * TokenData) -> Thunk<Environment * Node>)
+    | Lambda   of EvalArg * (Node list) * (Node list) * TokenData
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
     override x.Equals(obj) =
@@ -61,7 +66,8 @@ type Node =
             | Node.List   (l0, _), Node.List   (l1, _) -> l0 = l1
             | Node.Operator (op0, _),  Node.Operator (op1, _)   -> op0 = op1
             | Node.FFI     f0,     Node.FFI     f1     -> failwith (sprintf "Cannot compare functions!")
-            | Node.Special f0,     Node.Special f1     -> failwith (sprintf "Cannot compare macros!")
+            | Node.Special f0,     Node.Special f1     -> failwith (sprintf "Cannot compare specials!")
+            | Node.Lambda (e0, l0, b0, _), Node.Lambda (e1, l1, b1, _) -> e0 = e1 && l0 = l1 && b0 = b1 
             | _ -> false
         | _ -> false
     

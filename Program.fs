@@ -26,14 +26,22 @@ let parse filename schizo =
     let res = Parser.start (Lexer.read filename schizo) lexbuf
     res
 
+let (|>!) (a: 'A) (b: 'A -> 'B) = b a |> ignore; a
+
 [<EntryPoint>]
 let main argv = 
     if argv.Length = 1 then
         if IO.File.Exists argv.[0] then
             try
+                let ffi     = FFI.getBuiltIns             |> Map.toArray
+                let special = Special.getBuiltIns         |> Map.toArray
+                let env     = Seq.concat [|ffi; special|] |> Map.ofSeq
+                
                 IO.File.ReadAllText argv.[0]
                 |> parse argv.[0]
+                |>! Special.eval env
                 |> printfn "%A"
+
                 printfn "%A" argv
                 0 // return an integer exit code
             with e ->
