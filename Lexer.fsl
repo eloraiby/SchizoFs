@@ -53,10 +53,10 @@ rule read filename istream =
 	| newline       { newline lexbuf; read filename istream lexbuf }
 	| int64         { INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| real64        { REAL64    (Real64Node     (float (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
-    | symbol        { SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
-    | op            { OPERATOR  (OperatorNode   (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
 	| "true"        { TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) }
 	| "false"       { FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) }
+    | symbol        { SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
+    | op            { OPERATOR  (OperatorNode   (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
 	| '"'           { read_string filename istream "" false lexbuf }
 	| '{'           { LEFT_BRACE  (positionToTokenData(filename, lexbuf.StartPos)) }
 	| '}'           { RIGHT_BRACE (positionToTokenData(filename, lexbuf.StartPos)) }

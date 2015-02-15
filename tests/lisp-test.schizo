@@ -1,5 +1,15 @@
 ﻿((lambda ()
-    ((io.write "hello")
+    ((define hello "hello")
+     (define world " world")
+     (define isOk true)
+     (define isNot false)
+     (if isOk
+      then (io.write "isOk")
+      else (io.write "else inOk"))
+     (if isNot
+      then (io.write "else isNot")
+      else (io.write "isNot"))
+     (io.write hello)
      (io.write " World"))
   )
 ())
