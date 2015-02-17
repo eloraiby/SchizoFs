@@ -75,4 +75,6 @@ exp_list:
 
 paren_exp:
   | LEFT_PAREN exp_list                     { raise (Exception (sprintf "SyntaxError: Unmatched '(' @ Line: %d Column: %d" ($1.LineNumber + 1) ($1.Column + 1))) }
-  | LEFT_PAREN exp_list RIGHT_PAREN         { ListNode ((List.rev $2), $1) }
+  | LEFT_PAREN exp_list RIGHT_PAREN         { match $2 with
+                                              | [] -> Node.Unit $1
+                                              | _  -> ListNode ((List.rev $2), $1) }

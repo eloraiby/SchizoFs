@@ -42,6 +42,7 @@ type EvalArgs =
 
 [<CustomEquality; CustomComparison>]
 type Node =
+    | Unit     of                 TokenData
     | Bool     of bool          * TokenData
     | SInt64   of int64         * TokenData
     | Real64   of double        * TokenData 
@@ -58,6 +59,7 @@ type Node =
         match obj with
         | :? Node as y ->
             match x, y with
+            | Node.Unit    _,      Node.Unit    _      -> true
             | Node.Bool   (b0, _), Node.Bool   (b1, _) -> b0 = b1
             | Node.SInt64 (i0, _), Node.SInt64 (i1, _) -> i0 = i1
             | Node.Real64 (r0, _), Node.Real64 (r1, _) -> r0 = r1
@@ -106,6 +108,7 @@ type Node
 with
     member x.TokenData =
         match x with
+        | Unit     td      -> td
         | Bool     (_, td) -> td
         | SInt64   (_, td) -> td
         | Real64   (_, td) -> td 

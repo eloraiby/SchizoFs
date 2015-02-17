@@ -39,8 +39,10 @@ let main argv =
                 
                 IO.File.ReadAllText argv.[0]
                 |> parse argv.[0]
-                |>! Special.eval env
-                |> printfn "%A"
+                |>! printfn "%A"
+                |> Special.eval env
+                |> ignore
+
 
                 printfn "%A" argv
                 0 // return an integer exit code

@@ -419,12 +419,14 @@ let _fsyacc_reductions ()  =    [|
                 (
                    (
 # 78 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
-                                                                   ListNode ((List.rev _2), _1) 
+                                                                   match _2 with
+                                                                   | [] -> Node.Unit _1
+                                                                   | _  -> ListNode ((List.rev _2), _1) 
                    )
 # 78 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'paren_exp));
 |]
-# 427 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
+# 429 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
 let tables () : Microsoft.FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;

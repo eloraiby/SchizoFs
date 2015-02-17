@@ -8,6 +8,7 @@ module private BuiltIn =
 
     let rec evalOne (env: Environment) (n: Node) : Thunk<Environment * Node> =
         match n with
+        | Unit _
         | Bool _
         | SInt64 _
         | Real64 _
@@ -17,7 +18,7 @@ module private BuiltIn =
         | Lambda _          -> Thunk<_>.Final (env, n)
         | Symbol (s, td)    ->
             match env.TryFind s with
-            | Some v -> Thunk<_>.Final (env, snd (evalOne env v).Value)
+            | Some v -> Thunk<_>.Final (env, snd (evalOne env v).Value) // evaluate lazily (macro language)
             | None   -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
         | Operator (op, td) -> failwith (sprintf "Unexpected operator %s @ line %d, column %d" op td.LineNumber td.Column)
         | List (nl, td)     -> apply env (nl, td)
@@ -41,8 +42,9 @@ module private BuiltIn =
                                   | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
 
                 let t = match t with
-                        | Node.List (l, _) :: [] -> l
-                        | x                      -> failwith (sprintf "<lambda/macro> expected args, got %A @ line %d, column %d" x td.LineNumber td.Column)
+                        | Node.Unit _ :: []     -> []
+                        | []                     -> failwith (sprintf "<lambda/macro> expected args, got nil @ line %d, column %d" td.LineNumber td.Column)
+                        | t                      -> t
 
                 let env = match e with
                           | EVAL -> evalList env t
@@ -51,7 +53,7 @@ module private BuiltIn =
                           |> List.zip symList
                           |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
 
-                let initalThunk = Thunk.Final (env, Node.List ([], td))
+                let initalThunk = Thunk.Final (env, Node.Unit td)
 
                 body
                 |> List.fold(fun (acc: Thunk<Environment * Node>) n ->
@@ -68,7 +70,7 @@ module private BuiltIn =
     let define (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> =
         match nl with
         | Node.Symbol (s, std) :: n :: [] ->
-            Thunk.Final (env.Add(s, n), Node.List ([], std))
+            Thunk.Final (env.Add(s, n), Node.Unit std)
         | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
     let if_then_else (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> =
@@ -82,8 +84,8 @@ module private BuiltIn =
 
     let lambdaAndMacro (evalArgs: EvalArgs) (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> = 
         match nl with
-        | Node.List (args, _) :: Node.List (body, _) :: [] ->
-            Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = args; VarArgs = []; Body = body }, td))
+        | Node.List (args, _) :: Node.List (body, _) :: [] -> Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = args; VarArgs = []; Body = body }, td))
+        | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = []; VarArgs = []; Body = body }, td))
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
 open BuiltIn
@@ -104,4 +106,4 @@ let eval (env: Environment) (n: Node option) : Node =
     | Some (Node.List (n, td)) ->
         snd (eval env (n, td)).Value
     | Some n -> n
-    | None -> Node.List ([], TokenData.New("", 0, 0, 0))
+    | None -> Node.Unit (TokenData.New("", 0, 0, 0))

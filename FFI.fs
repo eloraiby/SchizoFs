@@ -107,6 +107,7 @@ module private BuiltIn =
             | h :: t ->
                 let rec writeOne n =
                     match n with
+                    | Node.Unit   _         -> printf "()"
                     | Node.Bool   (b, _)    -> printf "%b" b
                     | Node.SInt64 (i, _)    -> printf "%d" i
                     | Node.Real64 (r, _)    -> printf "%f" r 
