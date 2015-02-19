@@ -42,9 +42,9 @@ module private BuiltIn =
                                   | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
 
                 let t = match t with
+                        | []                    -> failwith (sprintf "<lambda/macro> expected args, got no arguments @ line %d, column %d" td.LineNumber td.Column)
                         | Node.Unit _ :: []     -> []
-                        | []                     -> failwith (sprintf "<lambda/macro> expected args, got nil @ line %d, column %d" td.LineNumber td.Column)
-                        | t                      -> t
+                        | t                     -> t
 
                 let env = match e with
                           | EVAL -> evalList env t

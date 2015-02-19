@@ -19,6 +19,13 @@
      (io.write c)
      (define add2 (lambda (a b) ((sint64.add a b))))
      (io.write (add2 11 22))
+     (define something (lambda()((io.write "something"))))
+     (something ())
+
+     (define passedLambda (lambda (a) ((sint64.mul 2 a))))
+     (io.write (passedLambda 3))
+     (define callingLambda (lambda(cl a)((cl a))))
+     (io.write (callingLambda passedLambda 4))
      )
   )
 ())
