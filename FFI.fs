@@ -88,6 +88,9 @@ module private BuiltIn =
     
         let from (nl: Node list, td: TokenData) : Node =
             Node.List (nl, td)
+
+        let rev (nl: Node list, td: TokenData) : Node =
+            Node.List (nl |> List.rev, td)
         
     module Symbol =
 
@@ -185,6 +188,7 @@ let getBuiltIns =
         "list.tail",        Node.FFI List.tail
         "list.cons",        Node.FFI List.cons
         "list.from",        Node.FFI List.from
+        "list.rev",         Node.FFI List.rev
 
         "symbol.to_string", Node.FFI Symbol.toString
         "symbol.from",      Node.FFI Symbol.from

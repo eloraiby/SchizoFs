@@ -27,7 +27,54 @@ module private BuiltIn =
         nl
         |> List.map(fun n -> snd (evalOne env n).Value)
      
-    and  apply (env: Environment) (nl: Node list, td: TokenData) =
+    and applyLambda (e: EvalArgs) (variadic: ArgsType, syms: Node list) (body: Node list) (env: Environment) (args: Node list, td: TokenData) =
+        let symList =
+            syms
+            |> List.map(function
+                        | Node.Symbol (s, td) -> s
+                        | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
+
+
+        let t =
+            match args with
+            | []                    -> failwith (sprintf "<lambda/macro> expected args, got no arguments @ line %d, column %d" td.LineNumber td.Column)
+            | Node.Unit _ :: []     -> []
+            | t                     -> t
+            
+        let t =
+            match e with
+            | EVAL -> evalList env t
+            | RAW  -> t
+
+        let env =
+            match variadic with
+            | Variadic ->
+                let argCount = syms.Length
+                let _, args, varargs =
+                    t
+                    |> List.fold(fun (i, args, varargs) e ->
+                        if i < argCount 
+                        then i + 1, e :: args, varargs
+                        else i    , args     , e :: varargs) (0, [], [])
+
+                let env =
+                    args
+                    |> List.rev
+                    |> List.zip symList
+                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
+                env.Add ("...", Node.List (Node.Symbol ("list.from",TokenData.New("", 0, 0, 0)) :: (varargs |> List.rev), TokenData.New("", 0, 0, 0)))
+            | NonVariadic ->
+                t
+                |> List.zip symList
+                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
+
+        let initalThunk = Thunk.Final (env, Node.Unit td)
+
+        body
+        |> List.fold(fun (acc: Thunk<Environment * Node>) n ->
+                        let env, _ = acc.Value
+                        evalOne env n) initalThunk
+    and apply (env: Environment) (nl: Node list, td: TokenData) =
         match nl with
         | []     -> Thunk.Final (env, Node.List (nl, td))
         | h :: t ->
@@ -35,32 +82,9 @@ module private BuiltIn =
             match (evalOne env h).Value with
             | env, FFI f     -> Thunk.Final (env, f ((evalList env t), td))
             | env, Special f -> f env (t, td)
-            | env, Lambda ({ EvalArgs = e; ArgSymbols = syms; Body = body; VarArgs = varargs }, td) ->
-                let symList = syms
-                              |> List.map(function
-                                  | Node.Symbol (s, td) -> s
-                                  | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
+            | env, Lambda ({ EvalArgs = e; ArgSymbols = syms; Body = body }, td) -> applyLambda e syms body env (t, td)
 
-                let t = match t with
-                        | []                    -> failwith (sprintf "<lambda/macro> expected args, got no arguments @ line %d, column %d" td.LineNumber td.Column)
-                        | Node.Unit _ :: []     -> []
-                        | t                     -> t
-
-                let env = match e with
-                          | EVAL -> evalList env t
-                          | RAW  -> t
-
-                          |> List.zip symList
-                          |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
-
-                let initalThunk = Thunk.Final (env, Node.Unit td)
-
-                body
-                |> List.fold(fun (acc: Thunk<Environment * Node>) n ->
-                                let env, _ = acc.Value
-                                evalOne env n) initalThunk
-
-            | _ -> failwith "Should never reach this point"
+            | xxxx -> failwith "Should never reach this point"
 
     let rec eval (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> =                  
         match nl with
@@ -84,8 +108,21 @@ module private BuiltIn =
 
     let lambdaAndMacro (evalArgs: EvalArgs) (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> = 
         match nl with
-        | Node.List (args, _) :: Node.List (body, _) :: [] -> Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = args; VarArgs = []; Body = body }, td))
-        | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = []; VarArgs = []; Body = body }, td))
+        | Node.List (args, _) :: Node.List (body, _) :: [] ->
+
+            let revSyms = args |> List.rev
+
+            let argSyms =
+                match revSyms.Head with
+                | Node.Symbol ("...", _) -> Variadic, revSyms.Tail |> List.rev
+                | _                      -> NonVariadic, args
+
+            revSyms.Tail
+            |> List.iter (function | Node.Symbol ("...", td) -> failwith "<lambda/macro>: ellipsis \"...\" should always be the ending argument"; | _ -> ())
+
+                     
+            Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = argSyms; Body = body }, td))
+        | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = NonVariadic, [];   Body = body }, td))
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
 open BuiltIn

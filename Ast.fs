@@ -81,10 +81,13 @@ type Node =
           | :? Node as y -> compare x y
           | _ -> invalidArg "yobj" "cannot compare values of different types" 
 
+and ArgsType =
+    | Variadic    
+    | NonVariadic
+
 and LambdaDetail = {
     EvalArgs    : EvalArgs
-    ArgSymbols  : Node list
-    VarArgs     : Node list
+    ArgSymbols  : ArgsType * Node list
     Body        : Node list
 }                    
 and Environment = Map<string, Node>

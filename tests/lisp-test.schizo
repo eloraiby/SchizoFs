@@ -26,6 +26,15 @@
      (io.write (passedLambda 3))
      (define callingLambda (lambda(cl a)((cl a))))
      (io.write (callingLambda passedLambda 4))
+
+     (define revVariadic (lambda (a b ...) (
+        (io.write a)
+        (io.write b)
+        (io.write (list.head ...))
+        (io.write (list.head (list.tail ...)))
+        )) )
+
+     (revVariadic 1 2 3 4)
      )
   )
 ())
