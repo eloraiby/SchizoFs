@@ -62,7 +62,15 @@ module private BuiltIn =
                     |> List.rev
                     |> List.zip symList
                     |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
-                env.Add ("...", Node.List (Node.Symbol ("list.from",TokenData.New("", 0, 0, 0)) :: (varargs |> List.rev), TokenData.New("", 0, 0, 0)))
+
+                let varargs = varargs |> List.rev
+
+                env.Add ("...",
+                         Node.List (Node.Symbol (match e with
+                                                 | EVAL -> "list.from"
+                                                 | RAW -> "quote"
+                                                 , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0)))
+
             | NonVariadic ->
                 t
                 |> List.zip symList
@@ -125,6 +133,9 @@ module private BuiltIn =
         | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(env, Node.Lambda ({ EvalArgs = evalArgs; ArgSymbols = NonVariadic, [];   Body = body }, td))
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
+    let quote (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> =
+        Thunk.Final(env, Node.List(nl, td))
+         
 open BuiltIn
 
 
@@ -135,6 +146,7 @@ let getBuiltIns =
         "define", Node.Special define
         "if",     Node.Special if_then_else
         "eval",   Node.Special eval
+        "quote",  Node.Special quote
     |]
     |> Map.ofArray
 

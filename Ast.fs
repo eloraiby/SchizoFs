@@ -132,52 +132,52 @@ let SymbolNode   sym (f, ln, col, off)    = Symbol   (sym,(TokenData.New(f, ln, 
 let OperatorNode op  (f, ln, col, off)    = Operator (op, (TokenData.New(f, ln, col, off)))
 let ListNode     l                        = List l
 
-type OpType =
-    | Undefined
-    | UnOp0 
-    | UnOp1 
-    | UnOp2 
-    | UnOp3 
-    | UnOp4 
-    | UnOp5 
-    | UnOp6 
-    | UnOp7 
-    | UnOp8 
-    | UnOp9 
-    | BinOp0
-    | BinOp1
-    | BinOp2
-    | BinOp3
-    | BinOp4
-    | BinOp5
-    | BinOp6
-    | BinOp7
-    | BinOp8
-    | BinOp9
-
-type ParserEnv = Map<string, OpType * TokenData>
-
-type ParserState() =
-    let stack   = ref []
-    let current = ref Map.empty
-    
-    member x.CurrentEnv : ParserEnv =
-        !current
-
-    member x.PushCurrentEnv()       =
-        stack := !current :: !stack
-
-    member x.PopEnv()   =
-        current := (!stack).Head
-        stack   := (!stack).Tail
-
-    member x.AddOperator(s: string, op: OpType, td: TokenData)  =
-        current := (!current).Add(s, (op, td))
-
-    member x.FindOperator(s: string) =
-        (!current).TryFind s
-
-
+//type OpType =
+//    | Undefined
+//    | UnOp0 
+//    | UnOp1 
+//    | UnOp2 
+//    | UnOp3 
+//    | UnOp4 
+//    | UnOp5 
+//    | UnOp6 
+//    | UnOp7 
+//    | UnOp8 
+//    | UnOp9 
+//    | BinOp0
+//    | BinOp1
+//    | BinOp2
+//    | BinOp3
+//    | BinOp4
+//    | BinOp5
+//    | BinOp6
+//    | BinOp7
+//    | BinOp8
+//    | BinOp9
+//
+//type ParserEnv = Map<string, OpType * TokenData>
+//
+//type ParserState() =
+//    let stack   = ref []
+//    let current = ref Map.empty
+//    
+//    member x.CurrentEnv : ParserEnv =
+//        !current
+//
+//    member x.PushCurrentEnv()       =
+//        stack := !current :: !stack
+//
+//    member x.PopEnv()   =
+//        current := (!stack).Head
+//        stack   := (!stack).Tail
+//
+//    member x.AddOperator(s: string, op: OpType, td: TokenData)  =
+//        current := (!current).Add(s, (op, td))
+//
+//    member x.FindOperator(s: string) =
+//        (!current).TryFind s
+//
+//
 
 (*
 let isAlpha = function
