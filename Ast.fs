@@ -36,6 +36,13 @@ with
         Offset      = offset
     }
 
+    static member Empty = {
+        FileName    = ""
+        LineNumber  = 0
+        Column      = 0
+        Offset      = 0
+    }
+
 type EvalArgs =
     | EVAL
     | RAW

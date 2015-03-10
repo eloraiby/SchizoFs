@@ -18,7 +18,7 @@ module private BuiltIn =
         | Lambda _          -> Thunk<_>.Final (env, n)
         | Symbol (s, td)    ->
             match env.TryFind s with
-            | Some v -> Thunk<_>.Final (env, snd (evalOne env v).Value) // evaluate lazily (macro language)
+            | Some v -> Thunk<_>.Final (env, snd (evalOne env v).Value) // evaluate lazily (macro language/late binding)
             | None   -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
         | Operator (op, td) -> failwith (sprintf "Unexpected operator %s @ line %d, column %d" op td.LineNumber td.Column)
         | List (nl, td)     -> apply env (nl, td)
@@ -28,6 +28,7 @@ module private BuiltIn =
         |> List.map(fun n -> snd (evalOne env n).Value)
      
     and applyLambda (e: EvalArgs) (variadic: ArgsType, syms: Node list) (body: Node list) (env: Environment) (args: Node list, td: TokenData) =
+        let origEnv = env
         let symList =
             syms
             |> List.map(function
@@ -78,10 +79,13 @@ module private BuiltIn =
 
         let initalThunk = Thunk.Final (env, Node.Unit td)
 
+        // TODO: environment is leaking here, fix that!
         body
         |> List.fold(fun (acc: Thunk<Environment * Node>) n ->
                         let env, _ = acc.Value
                         evalOne env n) initalThunk
+
+
     and apply (env: Environment) (nl: Node list, td: TokenData) =
         match nl with
         | []     -> Thunk.Final (env, Node.List (nl, td))
@@ -92,7 +96,7 @@ module private BuiltIn =
             | env, Special f -> f env (t, td)
             | env, Lambda ({ EvalArgs = e; ArgSymbols = syms; Body = body }, td) -> applyLambda e syms body env (t, td)
 
-            | xxxx -> failwith "Should never reach this point"
+            | env, xxxx -> failwith "Should never reach this point"
 
     let rec eval (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> =                  
         match nl with
@@ -134,6 +138,8 @@ module private BuiltIn =
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
     let quote (env: Environment) (nl: Node list, td: TokenData) : Thunk<Environment * Node> =
+        // TODO: unquote
+        // TODO: unquote.splice
         Thunk.Final(env, Node.List(nl, td))
          
 open BuiltIn

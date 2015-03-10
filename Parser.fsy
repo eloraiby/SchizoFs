@@ -60,6 +60,7 @@ atom:
 
 exp:
   | paren_exp                               { $1 }
+  | brace_exp                               { $1 }
 
 exp_member:
   | atom                                    { $1 }
@@ -78,3 +79,17 @@ paren_exp:
   | LEFT_PAREN exp_list RIGHT_PAREN         { match $2 with
                                               | [] -> Node.Unit $1
                                               | _  -> ListNode ((List.rev $2), $1) }
+
+sc:
+  | SC                                      {}
+  | sc SC                                   {}
+
+bexp_list:
+  | exp_member_list                         { [ ListNode ((List.rev $1), TokenData.Empty) ] }
+  | bexp_list sc exp_member_list            { ( ListNode ((List.rev $3), TokenData.Empty) ) :: $1 }
+//  | bexp_list sc exp_member_list sc         { ( ListNode ((List.rev $3), TokenData.Empty) ) :: $1 }
+
+brace_exp:
+  | LEFT_BRACE bexp_list                    { raise (Exception (sprintf "SyntaxError: Unmatched '{' @ Line: %d Column: %d" ($1.LineNumber + 1) ($1.Column + 1))) }
+  | LEFT_BRACE bexp_list RIGHT_BRACE        { ListNode ((List.rev $2), $1) }
+  | LEFT_BRACE bexp_list sc RIGHT_BRACE     { ListNode ((List.rev $2), $1) }

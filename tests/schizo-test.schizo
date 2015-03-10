@@ -1,0 +1,35 @@
+﻿{
+    (lambda () {
+        define let (macro (...) {
+            define name  (list.head ...);
+            define eqSym (list.head (list.tail ...));
+            define rest  (list.tail (list.tail ...));
+            eval (quote define (unquote name rest));
+        });
+
+        define   h "hello";
+        io.write h;       
+        io.write "Hello World";
+        io.write "Again";
+        
+        define f (lambda () {
+            io.write "I am";
+        });
+        f();
+
+        let      a b c;
+        //io.write something;
+
+        define a (let f2 = lambda() {
+            io.write "I am 2";
+        });
+
+        io.write a;
+
+        let f2 = lambda() {
+            io.write "I am 2";
+        };
+        
+        f2 ();
+    })()
+}

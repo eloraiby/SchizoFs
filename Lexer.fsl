@@ -55,6 +55,7 @@ rule read filename istream =
 	| real64        { REAL64    (Real64Node     (float (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| "true"        { TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) }
 	| "false"       { FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) }
+    | "//"          { read_line_comment filename istream lexbuf }
     | symbol        { SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
     | op            { OPERATOR  (OperatorNode   (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
 	| '"'           { read_string filename istream "" false lexbuf }
@@ -76,4 +77,8 @@ and read_string filename istream str ignorequote =
 	| '\\'          { read_string filename istream str true lexbuf }
 	| [^ '"' '\\']+ { read_string filename istream (str+(lexeme lexbuf)) false lexbuf }
 	| eof           { raise (Exception ("String is not terminated")) }
+and read_line_comment filename istream =
+    parse
+    | newline       { read filename istream lexbuf }
+    | _             { read_line_comment filename istream lexbuf }
 { }
