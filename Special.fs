@@ -5,7 +5,6 @@ open Ast
 
 module private BuiltIn =
 
-
     let rec evalOne (env: Environment) (n: Node) : Thunk<Node> =
         match n with
         | Unit _
@@ -32,9 +31,10 @@ module private BuiltIn =
         let origEnv = env
         let symList =
             syms
-            |> List.map(function
-                        | Node.Symbol (s, td) -> s
-                        | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
+            |> List.map
+                (function
+                    | Node.Symbol (s, td) -> s
+                    | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
 
 
         let t =
@@ -67,36 +67,35 @@ module private BuiltIn =
 
                 let varargs = varargs |> List.rev
 
-                env.Add ("...",
-                         Node.List (Node.Symbol (match e with
-                                                 | EVAL -> "list.from"
-                                                 | RAW -> "quote"
-                                                 , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0)))
+                env.Add
+                    ("...",
+                     Node.List
+                        (Node.Symbol
+                            (match e with
+                             | EVAL -> "list.from"
+                             | RAW -> "quote"
+                             , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0)))
 
             | NonVariadic ->
                 t
                 |> List.zip symList
                 |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
 
-        let initalThunk = env, Thunk.Final (Node.Unit td)
-
-        // TODO: environment is leaking here, fix that!
-        let newEnv, ret =
-            body
-            |> List.fold
-                (fun (accEnv: Environment, accNode: Thunk<Node>) n ->
-                    let env =
-                        match accNode.Value with
-                        | Node.Env env -> env
-                        | _            -> accEnv
-
-                    env, evalOne env n) initalThunk
+        let newEnv, ret = evalBody env body
 
         match e with
         | EVAL -> ret
-        | RAW  ->
-            let n = ret.Value
-            evalOne env n
+        | RAW  -> evalOne env ret.Value
+
+    and evalBody env body =
+        body
+        |> List.fold
+            (fun (env: Environment, last: Thunk<Node>) n ->
+                let env =
+                    match last.Value with
+                    | Node.Env env -> env
+                    | _            -> env
+                env, evalOne env n) (env, Thunk.Final(Node.Unit TokenData.Empty))
 
 
     and apply (env: Environment) (nl: Node list, td: TokenData) =
@@ -125,20 +124,9 @@ module private BuiltIn =
     let if_then_else (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
         match nl with
         | cond :: Node.Symbol ("then", _) :: Node.List(thenBody, _) :: Node.Symbol ("else", _) :: Node.List(elseBody, _) :: [] ->
-            let evalBody body =
-                body
-                |> List.fold
-                    (fun (env: Environment, last: Thunk<Node>) n ->
-                        let env =
-                            match last.Value with
-                            | Node.Env env -> env
-                            | _            -> env
-                        env, evalOne env n) (env, Thunk.Final(Node.Unit td))
-                |> snd
-
             match (evalOne env cond).Value with
-            | Node.Bool (true, _)    -> evalBody thenBody
-            | Node.Bool (flase, _)   -> evalBody elseBody
+            | Node.Bool (true, _)    -> evalBody env thenBody |> snd
+            | Node.Bool (flase, _)   -> evalBody env elseBody |> snd
             | x                      -> failwith (sprintf "if expression @ line %d, column %d expects a boolean condition, got %A" td.LineNumber td.Column x)
         | x -> failwith (sprintf "if expression @ line %d, column %d should have the form <if (cond) then {then body} else {else body}>, got %A" td.LineNumber td.Column x)
 
@@ -162,8 +150,7 @@ module private BuiltIn =
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
     let quote (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
-        // TODO: unquote
-        // TODO: unquote.splice
+        // Note: unquote will splice it in place
         let rec transform (n: Node list) =
             match n with
             | Symbol ("unquote", td) :: t ->
