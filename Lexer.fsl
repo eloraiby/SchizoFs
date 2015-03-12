@@ -70,6 +70,7 @@ rule read filename istream =
     | ';'			{ SC          (positionToTokenData(filename, lexbuf.StartPos)) }
 	| eof           { EOF }
 	| _             { raise (Exception (sprintf "SyntaxError: Unexpected char: '%s' Line: %d Column: %d" (lexeme lexbuf) (lexbuf.StartPos.Line+1) lexbuf.StartPos.Column)) }
+
 and read_string filename istream str ignorequote =
 	parse
 	| '"'           { if ignorequote then (read_string filename istream (str+"\\\"") false lexbuf)
@@ -77,6 +78,7 @@ and read_string filename istream str ignorequote =
 	| '\\'          { read_string filename istream str true lexbuf }
 	| [^ '"' '\\']+ { read_string filename istream (str+(lexeme lexbuf)) false lexbuf }
 	| eof           { raise (Exception ("String is not terminated")) }
+
 and read_line_comment filename istream =
     parse
     | newline       { read filename istream lexbuf }

@@ -2,10 +2,12 @@
     (lambda () {
         define let (macro (...) {
             define name  (list.head ...);
-            define eqSym (list.head (list.tail ...));
-            define rest  (list.tail (list.tail ...));
-            //eval (quote define (unquote name) (unquote rest));
-            eval (quote io.write "hello from macro");
+            define eqOp (list.head (list.tail ...));
+            if (string.eq? (operator.to_string eqOp) "=")
+            then {
+                define rest  (list.tail (list.tail ...));
+                eval (quote define (unquote name) (unquote rest));
+            } else { (); };
         });
 
         define   h "hello";
@@ -17,9 +19,6 @@
             io.write "I am";
         });
         f();
-
-        let      a b c;
-        //io.write something;
 
         define a (let f2 = lambda() {
             io.write "I am 2";

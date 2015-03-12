@@ -64,6 +64,11 @@ module private BuiltIn =
         | Node.Real64 (r0, _) :: Node.Real64(r1, _) :: [] -> ap ((f r0 r1), td)
         | _              -> failwith (sprintf "function requires 2 real elements! @ Line %d, Column %d" td.LineNumber td.Column)
 
+    let binString (f: string -> string -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
+        match nl with
+        | Node.String (s0, _) :: Node.String(s1, _) :: [] -> ap ((f s0 s1), td)
+        | _              -> failwith (sprintf "function requires 2 string elements! @ Line %d, Column %d" td.LineNumber td.Column)
+
     module List =
         let head (nl: Node list, td: TokenData) : Node =
             match nl with
@@ -99,10 +104,33 @@ module private BuiltIn =
             | Node.Symbol (s, td) :: [] -> Node.String (s, td)
             | x -> failwith (sprintf "<symbol.to_string node> @ Line %d, Column %d : Expecting a symbol got %A" td.LineNumber td.Column x)
 
-        let from (nl: Node list, td: TokenData) : Node =
+//        let from (nl: Node list, td: TokenData) : Node =
+//            match nl with
+//            | Node.String (s, _) :: [] -> Node.Symbol (s, td)
+//            | x -> failwith (sprintf "<symbol.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
+
+        let bin (f: string -> string -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
             match nl with
-            | Node.String (s, _) :: [] -> Node.Symbol (s, td)
-            | x -> failwith (sprintf "<symbol.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
+            | Node.Symbol (s0, _) :: Node.Symbol(s1, _) :: [] -> ap ((f s0 s1), td)
+            | _              -> failwith (sprintf "function requires 2 symbol elements! @ Line %d, Column %d" td.LineNumber td.Column)
+
+
+    module Operator =
+
+        let toString (nl: Node list, td: TokenData) : Node =
+            match nl with
+            | Node.Operator (s, td) :: [] -> Node.String (s, td)
+            | x -> failwith (sprintf "<operator.to_string node> @ Line %d, Column %d : Expecting a symbol got %A" td.LineNumber td.Column x)
+
+//        let from (nl: Node list, td: TokenData) : Node =
+//            match nl with
+//            | Node.String (s, _) :: [] -> Node.Operator (s, td)
+//            | x -> failwith (sprintf "<operator.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
+        
+        let bin (f: string -> string -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
+            match nl with
+            | Node.Operator (s0, _) :: Node.Operator(s1, _) :: [] -> ap ((f s0 s1), td)
+            | _              -> failwith (sprintf "function requires 2 symbol elements! @ Line %d, Column %d" td.LineNumber td.Column)
 
     module InOut =
         let rec write (nl: Node list, td: TokenData) : Node =
@@ -132,6 +160,7 @@ module private BuiltIn =
                     | Node.FFI     _        -> printf "<ffi>"
                     | Node.Special _        -> printf "<special>"
                     | Node.Lambda  _        -> printf "<lambda>"
+                    | Node.Env     env      -> printf "<Environment %A>" env
                 
                 printf "("
                 writeOne h
@@ -191,7 +220,17 @@ let getBuiltIns =
         "list.rev",         Node.FFI List.rev
 
         "symbol.to_string", Node.FFI Symbol.toString
-        "symbol.from",      Node.FFI Symbol.from
+      //"symbol.from",      Node.FFI Symbol.from
+        "symbol.eq?",       Node.FFI (Symbol.bin (=)  Node.Bool)
+        "symbol.noteq?",    Node.FFI (Symbol.bin (<>) Node.Bool)
+
+        "operator.to_string", Node.FFI Operator.toString
+      //"operator.from",      Node.FFI Operator.from
+        "operator.eq?",       Node.FFI (Operator.bin (=)  Node.Bool)
+        "operator.noteq?",    Node.FFI (Operator.bin (<>) Node.Bool)
+
+        "string.eq?",       Node.FFI (binString (=)  Node.Bool)
+        "string.noteq?",    Node.FFI (binString (<>) Node.Bool)
 
         "io.write",         Node.FFI InOut.write
     |]

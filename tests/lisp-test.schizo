@@ -4,11 +4,11 @@
      (define isOk true)
      (define isNot false)
      (if isOk
-      then (io.write "isOk")
-      else (io.write "else inOk"))
+      then ((io.write "isOk"))
+      else ((io.write "else inOk")))
      (if isNot
-      then (io.write "else isNot")
-      else (io.write "isNot"))
+      then ((io.write "else isNot"))
+      else ((io.write "isNot")))
      (io.write hello)
      (io.write " World")
      (define a 123)

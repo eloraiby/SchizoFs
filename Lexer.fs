@@ -273,23 +273,23 @@ and _fslex_read filename istream _fslex_state lexbuf =
 and _fslex_read_string filename istream str ignorequote _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 75 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 76 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
                                   if ignorequote then (read_string filename istream (str+"\\\"") false lexbuf)
                                      else STRING (StringNode (str) (positionToTuple(filename, lexbuf.StartPos))) 
 # 279 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
           )
   | 1 -> ( 
-# 77 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 78 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
                                   read_string filename istream str true lexbuf 
 # 284 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
           )
   | 2 -> ( 
-# 78 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 79 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
                                   read_string filename istream (str+(lexeme lexbuf)) false lexbuf 
 # 289 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
           )
   | 3 -> ( 
-# 79 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 80 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
                                   raise (Exception ("String is not terminated")) 
 # 294 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
           )
@@ -298,17 +298,17 @@ and _fslex_read_string filename istream str ignorequote _fslex_state lexbuf =
 and _fslex_read_line_comment filename istream _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 82 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 84 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
                                      read filename istream lexbuf 
 # 303 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
           )
   | 1 -> ( 
-# 83 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 85 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
                                      read_line_comment filename istream lexbuf 
 # 308 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
           )
   | _ -> failwith "read_line_comment"
 
-# 84 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 86 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
   
 # 3000000 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
