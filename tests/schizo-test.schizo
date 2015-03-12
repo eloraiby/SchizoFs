@@ -4,7 +4,8 @@
             define name  (list.head ...);
             define eqSym (list.head (list.tail ...));
             define rest  (list.tail (list.tail ...));
-            eval (quote define (unquote name rest));
+            //eval (quote define (unquote name) (unquote rest));
+            eval (quote io.write "hello from macro");
         });
 
         define   h "hello";

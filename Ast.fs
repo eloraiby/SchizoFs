@@ -58,8 +58,9 @@ type Node =
     | Operator of string        * TokenData
     | List     of Node list     * TokenData
     | FFI      of (Node list * TokenData -> Node)
-    | Special  of (Environment -> (Node list * TokenData) -> Thunk<Environment * Node>)
+    | Special  of (Environment -> (Node list * TokenData) -> Thunk<Node>)
     | Lambda   of LambdaDetail  * TokenData
+    | Env      of Environment
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
     override x.Equals(obj) =
@@ -77,6 +78,7 @@ type Node =
             | Node.FFI     f0,     Node.FFI     f1     -> failwith (sprintf "Cannot compare functions!")
             | Node.Special f0,     Node.Special f1     -> failwith (sprintf "Cannot compare specials!")
             | Node.Lambda (ld0, _), Node.Lambda (ld1, _) -> ld0 = ld1
+            | Node.Env     e0,     Node.Env     e1     -> e0 = e1
             | _ -> false
         | _ -> false
     
@@ -129,6 +131,7 @@ with
         | FFI      _       -> failwith "FFI has no token data"
         | Special  _       -> failwith "Special has no token data"
         | Lambda   (_, td) -> td
+        | Env      _       -> failwith "Environment has no token data"
         
      
 let BoolNode     b   (f, ln, col, off)    = Bool     (b,  (TokenData.New(f, ln, col, off)))
