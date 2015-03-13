@@ -38,9 +38,9 @@ let positionToTokenData (file, p: Position) =
 let int64	= ['-' '+']? ['0'-'9']+
 let digit	= ['0'-'9']
 let alpha   = ['a'-'z'] | ['A'-'Z']
-let special = '.' | '\'' | '@' | '?' | '_'
-let symbol  = (alpha | special) (alpha | special | digit)*
-let op      = ['+' '-' '~' '*' '/' '%' '|' '&' '!' '^' ',' ':' '=' '<' '>' '$']+ 
+let special = '.' | '\'' | '@' | '#' | '?' | '_'
+let op      = ['+' '-' '~' '*' '/' '%' '|' '&' '!' '^' ',' ':' '=' '<' '>' '$']
+let symbol  = (alpha | special | op) (alpha | special | digit | op)*
 let floatp  = digit+ '.' digit*
 let floate  =   digit+ ('.' digit* )? ('e'| 'E') ['+' '-']? digit+
 let real64  = floatp | floate 
@@ -57,7 +57,6 @@ rule read filename istream =
 	| "false"       { FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) }
     | "//"          { read_line_comment filename istream lexbuf }
     | symbol        { SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
-    | op            { OPERATOR  (OperatorNode   (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
 	| '"'           { read_string filename istream "" false lexbuf }
 	| '{'           { LEFT_BRACE  (positionToTokenData(filename, lexbuf.StartPos)) }
 	| '}'           { RIGHT_BRACE (positionToTokenData(filename, lexbuf.StartPos)) }
@@ -65,8 +64,6 @@ rule read filename istream =
 	| ']'           { RIGHT_BRACK (positionToTokenData(filename, lexbuf.StartPos)) }
     | '('           { LEFT_PAREN  (positionToTokenData(filename, lexbuf.StartPos)) }
     | ')'           { RIGHT_PAREN (positionToTokenData(filename, lexbuf.StartPos)) }
-    | "#("          { LEFT_HASH   (positionToTokenData(filename, lexbuf.StartPos)) }
-    | ")#"          { RIGHT_HASH  (positionToTokenData(filename, lexbuf.StartPos)) }
     | ';'			{ SC          (positionToTokenData(filename, lexbuf.StartPos)) }
 	| eof           { EOF }
 	| _             { raise (Exception (sprintf "SyntaxError: Unexpected char: '%s' Line: %d Column: %d" (lexeme lexbuf) (lexbuf.StartPos.Line+1) lexbuf.StartPos.Column)) }

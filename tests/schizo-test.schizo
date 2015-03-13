@@ -3,7 +3,7 @@
         define let (macro (...) {
             define name  (list.head ...);
             define eqOp (list.head (list.tail ...));
-            if (string.eq? (operator.to_string eqOp) "=")
+            if (string.eq? (symbol.to_string eqOp) "=")
             then {
                 define rest  (list.tail (list.tail ...));
                 eval (quote define (unquote name) (unquote rest));

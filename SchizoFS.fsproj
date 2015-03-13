@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\SchizoFS.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartWorkingDirectory>C:\Users\Wael\Projects\SchizoFS\</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\Users\AIFU\Projects\SchizoFs\</StartWorkingDirectory>
     <StartAction>Project</StartAction>
     <StartProgram>C:\Users\Raja\Projects\SchizoFS\SchizoFS\bin\Debug\SchizoFS.exe</StartProgram>
     <StartArguments>tests/schizo-test.schizo</StartArguments>
@@ -41,7 +41,7 @@
     <DocumentationFile>bin\Release\SchizoFS.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <StartArguments>tests/schizo-test.schizo</StartArguments>
-    <StartWorkingDirectory>C:\Users\Wael\Projects\SchizoFS\</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\Users\AIFU\Projects\SchizoFs\</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

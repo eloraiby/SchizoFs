@@ -26,7 +26,7 @@ open System
 %token <Node>       REAL64
 %token <Node>       STRING
 %token <Node>       SYMBOL
-%token <Node>       OPERATOR
+%token <Node>       TAG
 %token <Node>       TRUE
 %token <Node>       FALSE
 %token <TokenData>  LEFT_BRACE
@@ -51,7 +51,6 @@ prog:
 
 atom:
   | SYMBOL                                  { $1 }
-  | OPERATOR                                { $1 }
   | STRING                                  { $1 }
   | INT64                                   { $1 }
   | REAL64                                  { $1 }

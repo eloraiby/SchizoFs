@@ -55,11 +55,12 @@ type Node =
     | Real64   of double        * TokenData 
     | String   of string        * TokenData
     | Symbol   of string        * TokenData
-    | Operator of string        * TokenData
+    | Tag      of string        * Node * TokenData
     | List     of Node list     * TokenData
     | FFI      of (Node list * TokenData -> Node)
     | Special  of (Environment -> (Node list * TokenData) -> Thunk<Node>)
     | Lambda   of LambdaDetail  * TokenData
+    | Except   of Node          * TokenData
     | Env      of Environment
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
@@ -74,10 +75,11 @@ type Node =
             | Node.String (s0, _), Node.String (s1, _) -> s0 = s1
             | Node.Symbol (s0, _), Node.Symbol (s1, _) -> s0 = s1
             | Node.List   (l0, _), Node.List   (l1, _) -> l0 = l1
-            | Node.Operator (op0, _),  Node.Operator (op1, _)   -> op0 = op1
+            | Node.Tag    (t0, n0, _), Node.Tag (t1, n1, _)   -> t0 = t1 && n0 = n1
             | Node.FFI     f0,     Node.FFI     f1     -> failwith (sprintf "Cannot compare functions!")
             | Node.Special f0,     Node.Special f1     -> failwith (sprintf "Cannot compare specials!")
             | Node.Lambda (ld0, _), Node.Lambda (ld1, _) -> ld0 = ld1
+            | Node.Except (n0, _), Node.Except (n1, _) -> n0 = n1
             | Node.Env     e0,     Node.Env     e1     -> e0 = e1
             | _ -> false
         | _ -> false
@@ -126,44 +128,23 @@ with
         | Real64   (_, td) -> td 
         | String   (_, td) -> td
         | Symbol   (_, td) -> td
-        | Operator (_, td) -> td
+        | Tag      (_, _, td) -> td
         | List     (_, td) -> td
         | FFI      _       -> failwith "FFI has no token data"
         | Special  _       -> failwith "Special has no token data"
         | Lambda   (_, td) -> td
+        | Except   (_, td) -> td
         | Env      _       -> failwith "Environment has no token data"
         
      
-let BoolNode     b   (f, ln, col, off)    = Bool     (b,  (TokenData.New(f, ln, col, off)))
-let SInt64Node   si  (f, ln, col, off)    = SInt64   (si, (TokenData.New(f, ln, col, off)))
-let Real64Node   r   (f, ln, col, off)    = Real64   (r,  (TokenData.New(f, ln, col, off)))
-let StringNode   s   (f, ln, col, off)    = String   (s,  (TokenData.New(f, ln, col, off)))
-let SymbolNode   sym (f, ln, col, off)    = Symbol   (sym,(TokenData.New(f, ln, col, off)))
-let OperatorNode op  (f, ln, col, off)    = Operator (op, (TokenData.New(f, ln, col, off)))
-let ListNode     l                        = List l
+let BoolNode     b     (f, ln, col, off)  = Bool     (b,      (TokenData.New(f, ln, col, off)))
+let SInt64Node   si    (f, ln, col, off)  = SInt64   (si,     (TokenData.New(f, ln, col, off)))
+let Real64Node   r     (f, ln, col, off)  = Real64   (r,      (TokenData.New(f, ln, col, off)))
+let StringNode   s     (f, ln, col, off)  = String   (s,      (TokenData.New(f, ln, col, off)))
+let SymbolNode   sym   (f, ln, col, off)  = Symbol   (sym,    (TokenData.New(f, ln, col, off)))
+let TagNode      str n (f, ln, col, off)  = Tag      (str, n, (TokenData.New(f, ln, col, off)))
+let ListNode     l                        = List      l
 
-//type OpType =
-//    | Undefined
-//    | UnOp0 
-//    | UnOp1 
-//    | UnOp2 
-//    | UnOp3 
-//    | UnOp4 
-//    | UnOp5 
-//    | UnOp6 
-//    | UnOp7 
-//    | UnOp8 
-//    | UnOp9 
-//    | BinOp0
-//    | BinOp1
-//    | BinOp2
-//    | BinOp3
-//    | BinOp4
-//    | BinOp5
-//    | BinOp6
-//    | BinOp7
-//    | BinOp8
-//    | BinOp9
 //
 //type ParserEnv = Map<string, OpType * TokenData>
 //

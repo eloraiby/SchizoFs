@@ -20,7 +20,6 @@ module private BuiltIn =
             match env.TryFind s with
             | Some v -> Thunk<_>.Final ((evalOne env v).Value) // evaluate lazily (macro language/late binding)
             | None   -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
-        | Operator (op, td) -> failwith (sprintf "Unexpected operator %s @ line %d, column %d" op td.LineNumber td.Column)
         | List (nl, td)     -> apply env (nl, td)
 
     and evalList (env: Environment) (nl: Node list) =

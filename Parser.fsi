@@ -13,7 +13,7 @@ type token =
   | LEFT_BRACE of (TokenData)
   | FALSE of (Node)
   | TRUE of (Node)
-  | OPERATOR of (Node)
+  | TAG of (Node)
   | SYMBOL of (Node)
   | STRING of (Node)
   | REAL64 of (Node)
@@ -31,7 +31,7 @@ type tokenId =
     | TOKEN_LEFT_BRACE
     | TOKEN_FALSE
     | TOKEN_TRUE
-    | TOKEN_OPERATOR
+    | TOKEN_TAG
     | TOKEN_SYMBOL
     | TOKEN_STRING
     | TOKEN_REAL64

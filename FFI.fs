@@ -49,11 +49,6 @@ module private BuiltIn =
             | Node.Special _ :: [] -> Node.Bool (true, td)
             | _ -> Node.Bool (false, td)
 
-        let isOperator (nl: Node list, td: TokenData) : Node =
-            match nl with
-            | Node.Operator _ :: [] -> Node.Bool (true, td)
-            | _ -> Node.Bool (false, td)
-
     let binSInt32 (f: int64 -> int64 -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
         match nl with
         | Node.SInt64 (n0, _) :: Node.SInt64(n1, _) :: [] -> ap ((f n0 n1), td)
@@ -115,23 +110,6 @@ module private BuiltIn =
             | _              -> failwith (sprintf "function requires 2 symbol elements! @ Line %d, Column %d" td.LineNumber td.Column)
 
 
-    module Operator =
-
-        let toString (nl: Node list, td: TokenData) : Node =
-            match nl with
-            | Node.Operator (s, td) :: [] -> Node.String (s, td)
-            | x -> failwith (sprintf "<operator.to_string node> @ Line %d, Column %d : Expecting a symbol got %A" td.LineNumber td.Column x)
-
-//        let from (nl: Node list, td: TokenData) : Node =
-//            match nl with
-//            | Node.String (s, _) :: [] -> Node.Operator (s, td)
-//            | x -> failwith (sprintf "<operator.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
-        
-        let bin (f: string -> string -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
-            match nl with
-            | Node.Operator (s0, _) :: Node.Operator(s1, _) :: [] -> ap ((f s0 s1), td)
-            | _              -> failwith (sprintf "function requires 2 symbol elements! @ Line %d, Column %d" td.LineNumber td.Column)
-
     module InOut =
         let rec write (nl: Node list, td: TokenData) : Node =
             match nl with
@@ -156,7 +134,6 @@ module private BuiltIn =
                                                 else writeOne n
                                                      true) false
                                |> ignore
-                    | Node.Operator (op, _) -> printf "<operator %s>" op 
                     | Node.FFI     _        -> printf "<ffi>"
                     | Node.Special _        -> printf "<special>"
                     | Node.Lambda  _        -> printf "<lambda>"
@@ -185,7 +162,6 @@ let getBuiltIns =
         "pred.list?",       Node.FFI Predicate.isList
         "pred.ffi?",        Node.FFI Predicate.isFFI
         "pred.special?",    Node.FFI Predicate.isSpecial
-        "pred.operator?",   Node.FFI Predicate.isOperator
 
         "sint64.add",       Node.FFI (binSInt32 (+) Node.SInt64)
         "sint64.sub",       Node.FFI (binSInt32 (-) Node.SInt64)
@@ -223,11 +199,6 @@ let getBuiltIns =
       //"symbol.from",      Node.FFI Symbol.from
         "symbol.eq?",       Node.FFI (Symbol.bin (=)  Node.Bool)
         "symbol.noteq?",    Node.FFI (Symbol.bin (<>) Node.Bool)
-
-        "operator.to_string", Node.FFI Operator.toString
-      //"operator.from",      Node.FFI Operator.from
-        "operator.eq?",       Node.FFI (Operator.bin (=)  Node.Bool)
-        "operator.noteq?",    Node.FFI (Operator.bin (<>) Node.Bool)
 
         "string.eq?",       Node.FFI (binString (=)  Node.Bool)
         "string.noteq?",    Node.FFI (binString (<>) Node.Bool)
