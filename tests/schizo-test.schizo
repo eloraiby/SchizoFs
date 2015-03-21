@@ -28,8 +28,12 @@
 
         let f2 = lambda() {
             io.write "I am 2";
+            let a = real64.add -5.3 4.7;
+            io.write a; 
         };
         
         f2 ();
+
+        // f2[10][13];
     })()
 }

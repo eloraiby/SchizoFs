@@ -99,10 +99,10 @@ module private BuiltIn =
             | Node.Symbol (s, td) :: [] -> Node.String (s, td)
             | x -> failwith (sprintf "<symbol.to_string node> @ Line %d, Column %d : Expecting a symbol got %A" td.LineNumber td.Column x)
 
-//        let from (nl: Node list, td: TokenData) : Node =
-//            match nl with
-//            | Node.String (s, _) :: [] -> Node.Symbol (s, td)
-//            | x -> failwith (sprintf "<symbol.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
+        let from (nl: Node list, td: TokenData) : Node =
+            match nl with
+            | Node.String (s, _) :: [] -> Node.Symbol (s, td)
+            | x -> failwith (sprintf "<symbol.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
 
         let bin (f: string -> string -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
             match nl with
@@ -136,8 +136,11 @@ module private BuiltIn =
                                |> ignore
                     | Node.FFI     _        -> printf "<ffi>"
                     | Node.Special _        -> printf "<special>"
-                    | Node.Lambda  _        -> printf "<lambda>"
+                    | Node.LambdaRawArgs  _ -> printf "<lambda.rawargs>"
+                    | Node.LambdaEvalArgs _ -> printf "<lambda.evalargs>"
                     | Node.Env     env      -> printf "<Environment %A>" env
+                    | Node.Tag    (s, n, _) -> printf "<Tag: %s>" s; writeOne n
+                    | Node.Except (e, _)    -> printf "<Exception>"; writeOne e
                 
                 printf "("
                 writeOne h
@@ -196,7 +199,7 @@ let getBuiltIns =
         "list.rev",         Node.FFI List.rev
 
         "symbol.to_string", Node.FFI Symbol.toString
-      //"symbol.from",      Node.FFI Symbol.from
+        "symbol.from",      Node.FFI Symbol.from
         "symbol.eq?",       Node.FFI (Symbol.bin (=)  Node.Bool)
         "symbol.noteq?",    Node.FFI (Symbol.bin (<>) Node.Bool)
 

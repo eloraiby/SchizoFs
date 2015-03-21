@@ -3,7 +3,7 @@ module Parser
 #nowarn "64";; // turn off warnings that type variables used in production annotations are instantiated to concrete type
 open Microsoft.FSharp.Text.Lexing
 open Microsoft.FSharp.Text.Parsing.ParseHelpers
-# 1 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 1 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
 
 //
 // Schizo F# Referemce Compiler
@@ -25,7 +25,7 @@ open Microsoft.FSharp.Text.Parsing.ParseHelpers
 open Ast
 open System
 
-# 28 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 28 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
 // This type is the type of tokens accepted by the parser
 type token = 
   | EOF
@@ -80,6 +80,7 @@ type nonTerminalId =
     | NONTERM_sc
     | NONTERM_bexp_list
     | NONTERM_brace_exp
+    | NONTERM_brack_exp
 
 // This function maps tokens to integers indexes
 let tagOfToken (t:token) = 
@@ -141,21 +142,23 @@ let prodIdxToNonTerminal (prodIdx:int) =
     | 9 -> NONTERM_atom 
     | 10 -> NONTERM_exp 
     | 11 -> NONTERM_exp 
-    | 12 -> NONTERM_exp_member 
+    | 12 -> NONTERM_exp 
     | 13 -> NONTERM_exp_member 
-    | 14 -> NONTERM_exp_member_list 
+    | 14 -> NONTERM_exp_member 
     | 15 -> NONTERM_exp_member_list 
-    | 16 -> NONTERM_exp_list 
+    | 16 -> NONTERM_exp_member_list 
     | 17 -> NONTERM_exp_list 
-    | 18 -> NONTERM_paren_exp 
+    | 18 -> NONTERM_exp_list 
     | 19 -> NONTERM_paren_exp 
-    | 20 -> NONTERM_sc 
+    | 20 -> NONTERM_paren_exp 
     | 21 -> NONTERM_sc 
-    | 22 -> NONTERM_bexp_list 
+    | 22 -> NONTERM_sc 
     | 23 -> NONTERM_bexp_list 
-    | 24 -> NONTERM_brace_exp 
+    | 24 -> NONTERM_bexp_list 
     | 25 -> NONTERM_brace_exp 
     | 26 -> NONTERM_brace_exp 
+    | 27 -> NONTERM_brace_exp 
+    | 28 -> NONTERM_brack_exp 
     | _ -> failwith "prodIdxToNonTerminal: bad production index"
 
 let _fsyacc_endOfInputTag = 19 
@@ -202,18 +205,18 @@ let _fsyacc_dataOfToken (t:token) =
   | STRING _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
   | REAL64 _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
   | INT64 _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
-let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; 1us; 65535us; 0us; 2us; 6us; 65535us; 16us; 13us; 17us; 13us; 18us; 13us; 20us; 13us; 24us; 13us; 27us; 13us; 7us; 65535us; 0us; 4us; 16us; 14us; 17us; 14us; 18us; 14us; 20us; 14us; 24us; 14us; 27us; 14us; 6us; 65535us; 16us; 19us; 17us; 19us; 18us; 19us; 20us; 15us; 24us; 15us; 27us; 15us; 3us; 65535us; 20us; 16us; 24us; 18us; 27us; 17us; 1us; 65535us; 20us; 21us; 7us; 65535us; 0us; 11us; 16us; 11us; 17us; 11us; 18us; 11us; 20us; 11us; 24us; 11us; 27us; 11us; 1us; 65535us; 26us; 24us; 1us; 65535us; 27us; 26us; 7us; 65535us; 0us; 12us; 16us; 12us; 17us; 12us; 18us; 12us; 20us; 12us; 24us; 12us; 27us; 12us; |]
-let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; 3us; 5us; 12us; 20us; 27us; 31us; 33us; 41us; 43us; 45us; |]
-let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 2us; 1us; 3us; 1us; 4us; 1us; 5us; 1us; 6us; 1us; 7us; 1us; 8us; 1us; 9us; 1us; 10us; 1us; 11us; 1us; 12us; 1us; 13us; 1us; 14us; 2us; 15us; 17us; 2us; 15us; 22us; 2us; 15us; 23us; 1us; 15us; 2us; 18us; 19us; 2us; 18us; 19us; 1us; 19us; 1us; 20us; 3us; 21us; 23us; 26us; 1us; 21us; 4us; 23us; 24us; 25us; 26us; 3us; 24us; 25us; 26us; 1us; 25us; 1us; 26us; |]
-let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; 12us; 14us; 16us; 18us; 20us; 22us; 24us; 26us; 28us; 30us; 32us; 35us; 38us; 41us; 43us; 46us; 49us; 51us; 53us; 57us; 59us; 64us; 68us; 70us; |]
-let _fsyacc_action_rows = 30
-let _fsyacc_actionTableElements = [|3us; 32768us; 0us; 3us; 5us; 20us; 9us; 27us; 0us; 49152us; 0us; 16385us; 0us; 16386us; 0us; 16387us; 0us; 16388us; 0us; 16389us; 0us; 16390us; 0us; 16391us; 0us; 16392us; 0us; 16393us; 0us; 16394us; 0us; 16395us; 0us; 16396us; 0us; 16397us; 0us; 16398us; 8us; 16401us; 5us; 20us; 9us; 27us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 8us; 16406us; 5us; 20us; 9us; 27us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 8us; 16407us; 5us; 20us; 9us; 27us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 16399us; 8us; 16400us; 5us; 20us; 9us; 27us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 1us; 16402us; 4us; 22us; 0us; 16403us; 0us; 16404us; 10us; 32768us; 1us; 25us; 5us; 20us; 8us; 29us; 9us; 27us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 16405us; 2us; 16408us; 1us; 23us; 8us; 28us; 8us; 32768us; 5us; 20us; 9us; 27us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 16409us; 0us; 16410us; |]
-let _fsyacc_actionTableRowOffsets = [|0us; 4us; 5us; 6us; 7us; 8us; 9us; 10us; 11us; 12us; 13us; 14us; 15us; 16us; 17us; 18us; 19us; 28us; 37us; 46us; 47us; 56us; 58us; 59us; 60us; 71us; 72us; 75us; 84us; 85us; |]
-let _fsyacc_reductionSymbolCounts = [|1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 2us; 0us; 1us; 2us; 3us; 1us; 2us; 1us; 3us; 2us; 3us; 4us; |]
-let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; 3us; 3us; 3us; 3us; 3us; 3us; 4us; 4us; 5us; 5us; 6us; 6us; 7us; 7us; 8us; 8us; 9us; 9us; 10us; 10us; 11us; 11us; 11us; |]
-let _fsyacc_immediateActions = [|65535us; 49152us; 16385us; 16386us; 16387us; 16388us; 16389us; 16390us; 16391us; 16392us; 16393us; 16394us; 16395us; 16396us; 16397us; 16398us; 65535us; 65535us; 65535us; 16399us; 65535us; 65535us; 16403us; 16404us; 65535us; 16405us; 65535us; 65535us; 16409us; 16410us; |]
+let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; 1us; 65535us; 0us; 2us; 9us; 65535us; 0us; 14us; 17us; 14us; 18us; 14us; 19us; 14us; 20us; 14us; 22us; 14us; 26us; 14us; 29us; 14us; 33us; 14us; 9us; 65535us; 0us; 4us; 17us; 15us; 18us; 15us; 19us; 15us; 20us; 15us; 22us; 15us; 26us; 15us; 29us; 15us; 33us; 15us; 9us; 65535us; 0us; 32us; 17us; 21us; 18us; 21us; 19us; 21us; 20us; 21us; 22us; 16us; 26us; 16us; 29us; 16us; 33us; 16us; 4us; 65535us; 22us; 17us; 26us; 19us; 29us; 18us; 33us; 20us; 1us; 65535us; 22us; 23us; 9us; 65535us; 0us; 11us; 17us; 11us; 18us; 11us; 19us; 11us; 20us; 11us; 22us; 11us; 26us; 11us; 29us; 11us; 33us; 11us; 1us; 65535us; 28us; 26us; 1us; 65535us; 29us; 28us; 9us; 65535us; 0us; 12us; 17us; 12us; 18us; 12us; 19us; 12us; 20us; 12us; 22us; 12us; 26us; 12us; 29us; 12us; 33us; 12us; 9us; 65535us; 0us; 13us; 17us; 13us; 18us; 13us; 19us; 13us; 20us; 13us; 22us; 13us; 26us; 13us; 29us; 13us; 33us; 13us; |]
+let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; 3us; 5us; 15us; 25us; 35us; 40us; 42us; 52us; 54us; 56us; 66us; |]
+let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 2us; 2us; 3us; 14us; 1us; 4us; 1us; 5us; 1us; 6us; 1us; 7us; 1us; 8us; 1us; 9us; 1us; 10us; 1us; 11us; 1us; 12us; 1us; 13us; 1us; 14us; 2us; 15us; 28us; 2us; 16us; 18us; 2us; 16us; 23us; 2us; 16us; 24us; 2us; 16us; 28us; 2us; 16us; 28us; 2us; 19us; 20us; 2us; 19us; 20us; 1us; 20us; 1us; 21us; 3us; 22us; 24us; 27us; 1us; 22us; 4us; 24us; 25us; 26us; 27us; 3us; 25us; 26us; 27us; 1us; 26us; 1us; 27us; 1us; 28us; 1us; 28us; 1us; 28us; |]
+let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 11us; 13us; 15us; 17us; 19us; 21us; 23us; 25us; 27us; 29us; 31us; 33us; 36us; 39us; 42us; 45us; 48us; 51us; 54us; 57us; 59us; 61us; 65us; 67us; 72us; 76us; 78us; 80us; 82us; 84us; |]
+let _fsyacc_action_rows = 35
+let _fsyacc_actionTableElements = [|9us; 32768us; 0us; 3us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 49152us; 0us; 16385us; 0us; 16386us; 1us; 16387us; 7us; 16398us; 0us; 16388us; 0us; 16389us; 0us; 16390us; 0us; 16391us; 0us; 16392us; 0us; 16393us; 0us; 16394us; 0us; 16395us; 0us; 16396us; 0us; 16397us; 0us; 16398us; 1us; 16399us; 7us; 33us; 8us; 16402us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 8us; 16407us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 8us; 16408us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 9us; 32768us; 5us; 22us; 6us; 34us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 1us; 16400us; 7us; 33us; 8us; 16401us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 1us; 16403us; 4us; 24us; 0us; 16404us; 0us; 16405us; 10us; 32768us; 1us; 27us; 5us; 22us; 8us; 31us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 16406us; 2us; 16409us; 1us; 25us; 8us; 30us; 8us; 32768us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 16410us; 0us; 16411us; 1us; 32768us; 7us; 33us; 8us; 32768us; 5us; 22us; 9us; 29us; 10us; 10us; 11us; 9us; 13us; 5us; 14us; 6us; 15us; 8us; 16us; 7us; 0us; 16412us; |]
+let _fsyacc_actionTableRowOffsets = [|0us; 10us; 11us; 12us; 13us; 15us; 16us; 17us; 18us; 19us; 20us; 21us; 22us; 23us; 24us; 25us; 26us; 28us; 37us; 46us; 55us; 65us; 67us; 76us; 78us; 79us; 80us; 91us; 92us; 95us; 104us; 105us; 106us; 108us; 117us; |]
+let _fsyacc_reductionSymbolCounts = [|1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 2us; 0us; 1us; 2us; 3us; 1us; 2us; 1us; 3us; 2us; 3us; 4us; 4us; |]
+let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; 3us; 3us; 3us; 3us; 3us; 3us; 4us; 4us; 4us; 5us; 5us; 6us; 6us; 7us; 7us; 8us; 8us; 9us; 9us; 10us; 10us; 11us; 11us; 11us; 12us; |]
+let _fsyacc_immediateActions = [|65535us; 49152us; 16385us; 16386us; 65535us; 16388us; 16389us; 16390us; 16391us; 16392us; 16393us; 16394us; 16395us; 16396us; 16397us; 16398us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16404us; 16405us; 65535us; 16406us; 65535us; 65535us; 16410us; 16411us; 65535us; 65535us; 16412us; |]
 let _fsyacc_reductions ()  =    [| 
-# 216 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 219 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node option)) in
             Microsoft.FSharp.Core.Operators.box
@@ -222,205 +225,216 @@ let _fsyacc_reductions ()  =    [|
                       raise (Microsoft.FSharp.Text.Parsing.Accept(Microsoft.FSharp.Core.Operators.box _1))
                    )
                  : '_startstart));
-# 225 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 228 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'prog)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 46 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 46 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 46 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 46 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : Node option));
-# 236 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 239 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 49 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 49 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    None 
                    )
-# 49 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 49 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'prog));
-# 246 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 249 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 50 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 50 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    Some _1 
                    )
-# 50 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 50 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'prog));
-# 257 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 260 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 53 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 53 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 53 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 53 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'atom));
-# 268 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 271 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 54 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 54 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 54 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 54 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'atom));
-# 279 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 282 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 55 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 55 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 55 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 55 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'atom));
-# 290 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 293 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 56 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 56 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 56 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 56 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'atom));
-# 301 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 304 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 57 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 57 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 57 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 57 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'atom));
-# 312 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 315 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Node)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 58 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 58 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 58 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 58 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'atom));
-# 323 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 326 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'paren_exp)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 61 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 61 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 61 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 61 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp));
-# 334 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 337 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'brace_exp)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 62 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 62 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 62 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 62 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp));
-# 345 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 348 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
+        (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'brack_exp)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 63 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
+                                                                   _1 
+                   )
+# 63 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
+                 : 'exp));
+# 359 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'atom)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 65 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 66 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 65 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 66 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp_member));
-# 356 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 370 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 66 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 67 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 66 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 67 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp_member));
-# 367 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 381 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 69 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 70 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    [ _1 ] 
                    )
-# 69 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 70 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp_member_list));
-# 378 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 392 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member_list)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 70 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 71 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _2 :: _1 
                    )
-# 70 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 71 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp_member_list));
-# 390 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 404 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 73 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 74 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    [] 
                    )
-# 73 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 74 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp_list));
-# 400 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 414 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member_list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 74 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 75 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    _1 
                    )
-# 74 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 75 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'exp_list));
-# 411 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 425 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 77 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 78 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    raise (Exception (sprintf "SyntaxError: Unmatched '(' @ Line: %d Column: %d" (_1.LineNumber + 1) (_1.Column + 1))) 
                    )
-# 77 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 78 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'paren_exp));
-# 423 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 437 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_list)) in
@@ -428,48 +442,48 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 78 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 79 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    match _2 with
                                                                    | [] -> Node.Unit _1
                                                                    | _  -> ListNode ((List.rev _2), _1) 
                    )
-# 78 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 79 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'paren_exp));
-# 438 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 452 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 83 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 84 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                   
                    )
-# 83 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 84 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'sc));
-# 449 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 463 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'sc)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 84 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 85 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                   
                    )
-# 84 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 85 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'sc));
-# 461 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 475 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member_list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 87 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 88 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    [ ListNode ((List.rev _1), TokenData.Empty) ] 
                    )
-# 87 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 88 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'bexp_list));
-# 472 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 486 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'bexp_list)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'sc)) in
@@ -477,24 +491,24 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 88 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 89 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    ( ListNode ((List.rev _3), TokenData.Empty) ) :: _1 
                    )
-# 88 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 89 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'bexp_list));
-# 485 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 499 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'bexp_list)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 92 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 93 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    raise (Exception (sprintf "SyntaxError: Unmatched '{' @ Line: %d Column: %d" (_1.LineNumber + 1) (_1.Column + 1))) 
                    )
-# 92 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 93 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'brace_exp));
-# 497 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 511 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'bexp_list)) in
@@ -502,12 +516,12 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 93 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 94 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    ListNode ((List.rev _2), _1) 
                    )
-# 93 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 94 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'brace_exp));
-# 510 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 524 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'bexp_list)) in
@@ -516,13 +530,28 @@ let _fsyacc_reductions ()  =    [|
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 94 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 95 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                                                                    ListNode ((List.rev _2), _1) 
                    )
-# 94 "C:\Users\AIFU\Projects\SchizoFs\Parser.fsy"
+# 95 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
                  : 'brace_exp));
+# 538 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
+        (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member)) in
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'exp_member_list)) in
+            let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : TokenData)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 99 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
+                               let l = (Symbol ("get_item", _2)) :: _1 :: ListNode ((List.rev _3), _2) :: []
+                               ListNode (l, _2)  
+                   )
+# 99 "C:\Users\Wael\Projects\SchizoFS\Parser.fsy"
+                 : 'brack_exp));
 |]
-# 525 "C:\Users\AIFU\Projects\SchizoFs\Parser.fs"
+# 554 "C:\Users\Wael\Projects\SchizoFS\Parser.fs"
 let tables () : Microsoft.FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;

@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\SchizoFS.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartWorkingDirectory>C:\Users\AIFU\Projects\SchizoFs\</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\Users\Wael\Projects\SchizoFS\</StartWorkingDirectory>
     <StartAction>Project</StartAction>
     <StartProgram>C:\Users\Raja\Projects\SchizoFS\SchizoFS\bin\Debug\SchizoFS.exe</StartProgram>
     <StartArguments>tests/schizo-test.schizo</StartArguments>

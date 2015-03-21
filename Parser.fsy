@@ -60,6 +60,7 @@ atom:
 exp:
   | paren_exp                               { $1 }
   | brace_exp                               { $1 }
+  | brack_exp                               { $1 }
 
 exp_member:
   | atom                                    { $1 }
@@ -92,3 +93,8 @@ brace_exp:
   | LEFT_BRACE bexp_list                    { raise (Exception (sprintf "SyntaxError: Unmatched '{' @ Line: %d Column: %d" ($1.LineNumber + 1) ($1.Column + 1))) }
   | LEFT_BRACE bexp_list RIGHT_BRACE        { ListNode ((List.rev $2), $1) }
   | LEFT_BRACE bexp_list sc RIGHT_BRACE     { ListNode ((List.rev $2), $1) }
+
+brack_exp:
+  | exp_member LEFT_BRACK exp_member_list RIGHT_BRACK
+        { let l = (Symbol ("get_item", $2)) :: $1 :: ListNode ((List.rev $3), $2) :: []
+          ListNode (l, $2)  }

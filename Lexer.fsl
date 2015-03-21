@@ -42,8 +42,8 @@ let special = '.' | '\'' | '@' | '#' | '?' | '_'
 let op      = ['+' '-' '~' '*' '/' '%' '|' '&' '!' '^' ',' ':' '=' '<' '>' '$']
 let symbol  = (alpha | special | op) (alpha | special | digit | op)*
 let floatp  = digit+ '.' digit*
-let floate  =   digit+ ('.' digit* )? ('e'| 'E') ['+' '-']? digit+
-let real64  = floatp | floate 
+let floate  = digit+ ('.' digit* )? ('e'| 'E') ['+' '-']? digit+
+let real64  = ['-' '+']? (floatp | floate)
 let white	= [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 
@@ -51,8 +51,8 @@ rule read filename istream =
 	parse
 	| white         { read filename istream lexbuf }
 	| newline       { newline lexbuf; read filename istream lexbuf }
-	| int64         { INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| real64        { REAL64    (Real64Node     (float (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
+	| int64         { INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| "true"        { TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) }
 	| "false"       { FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) }
     | "//"          { read_line_comment filename istream lexbuf }
