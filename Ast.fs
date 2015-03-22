@@ -90,6 +90,10 @@ type Node =
           | :? Node as y -> compare x y
           | _ -> invalidArg "yobj" "cannot compare values of different types" 
 
+and Pin =
+    | Pinned
+    | Unpinned
+
 and ArgsType =
     | Variadic    
     | NonVariadic
@@ -98,7 +102,7 @@ and LambdaDetail = {
     ArgSymbols  : ArgsType * Node list
     Body        : Node list
 }                    
-and Environment = Map<string, Node>
+and Environment = Map<string, Pin * Node>
 and Thunk<'A> =
     | Continue of (unit -> Thunk<'A>)
     | Final    of 'A

@@ -55,7 +55,7 @@ rule read filename istream =
 	| int64         { INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| "true"        { TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) }
 	| "false"       { FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) }
-    | "//"          { read_line_comment filename istream lexbuf }
+    | "//" symbol*  { read_line_comment filename istream lexbuf }
     | symbol        { SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) }
 	| '"'           { read_string filename istream "" false lexbuf }
 	| '{'           { LEFT_BRACE  (positionToTokenData(filename, lexbuf.StartPos)) }

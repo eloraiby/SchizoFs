@@ -18,11 +18,11 @@ module private BuiltIn =
         | Tag _
         | Except _
         | LambdaRawArgs _
-        | LambdaEvalArgs _  -> Thunk<_>.Final (n)
+        | LambdaEvalArgs _  -> Thunk<_>.Final n
         | Symbol (s, td)    ->
             match env.TryFind s with
-            | Some v -> Thunk<_>.Final ((evalOne env v).Value) // evaluate lazily (macro language/late binding)
-            | None   -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
+            | Some (_, v) -> Thunk<_>.Final ((evalOne env v).Value) // evaluate lazily (macro language/late binding)
+            | None        -> Thunk<_>.Final n
         | List (nl, td)     -> apply env (nl, td)
 
     and evalList (env: Environment) (nl: Node list) =
@@ -61,21 +61,22 @@ module private BuiltIn =
                     args
                     |> List.rev
                     |> List.zip symList
-                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
+                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
                 let varargs = varargs |> List.rev
 
                 env.Add
                     ("...",
-                     Node.List
-                        (Node.Symbol
+                      (Unpinned
+                      , Node.List
+                         (Node.Symbol
                             ("quote"
-                             , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0)))
+                            , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
 
             | NonVariadic ->
                 t
                 |> List.zip symList
-                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
+                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
         let (newEnv, ret: Thunk<Node>) = evalBody env body
 
@@ -87,7 +88,7 @@ module private BuiltIn =
             let symToString =
                 function
                 | Node.Symbol (s, td) -> s
-                | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column)
+                | x                   -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column)
             
             syms
             |> List.map symToString
@@ -115,21 +116,22 @@ module private BuiltIn =
                     args
                     |> List.rev
                     |> List.zip symList
-                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
+                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
                 let varargs = varargs |> List.rev
 
                 env.Add
                     ("...",
-                     Node.List
+                      (Unpinned
+                      , Node.List
                         (Node.Symbol
                             ("list.from"
-                             , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0)))
+                            , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
 
             | NonVariadic ->
                 t
                 |> List.zip symList
-                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
+                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
         let newEnv, ret = evalBody env body
 
@@ -156,19 +158,13 @@ module private BuiltIn =
             | Special f -> f env (t, td)
             | LambdaRawArgs  ({ ArgSymbols = syms; Body = body }, td) -> applyLambdaRawArgs syms body env (t, td)
             | LambdaEvalArgs ({ ArgSymbols = syms; Body = body }, td) -> applyLambdaEvalArgs syms body env (t, td)
-
+            | Symbol (s, td) -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
             | xxxx -> failwith "Should never reach this point"
 
     let rec eval (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =                  
         match nl with
         | x :: []   -> evalOne env x
         | _         -> apply env (nl, td)
-
-    let define (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
-        match nl with
-        | Node.Symbol (s, _) :: n :: [] ->
-            Thunk.Final(Node.Env (env.Add(s, n)))
-        | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
     let if_then_else (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
         match nl with
@@ -222,17 +218,64 @@ module private BuiltIn =
 
         Thunk.Final(transform nl)
          
+module Symbol =
+        let define (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
+            match nl with
+            | Node.Symbol (s, _) :: n :: [] ->
+                match env.TryFind s with
+                | Some (p, n) ->
+                    match p with
+                    | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n))))
+                    | Pinned    -> failwith (sprintf "symbol %s is pinned, cannot redefine it" s)
+                | None -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n))))
+            | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
+
+        let assign (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
+            match nl with
+            | Node.Symbol (s, _) :: n :: [] ->
+                let n = BuiltIn.evalOne env n
+                match env.TryFind s with
+                | Some (p, pn) ->
+                    match p with
+                    | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, pn))))
+                    | Pinned    -> failwith (sprintf "symbol %s is pinned, cannot redefine it" s)
+                | None -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n.Value))))
+            | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
+
+        let pin (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
+            match nl with
+            | Node.Symbol (s, td) :: [] -> 
+                match env.TryFind s with
+                | Some (p, v) -> Thunk<_>.Final (Env (env.Add(s, (Pinned, v))))
+                | None -> failwith (sprintf "symbol %s not found" s)
+            | _                     -> failwith (sprintf "pin requires exactly one symbol argument")
+
+        let unpin (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =
+            match nl with
+            | Node.Symbol (s, td) :: [] -> 
+                match env.TryFind s with
+                | Some (p, v) -> Thunk<_>.Final (Env (env.Add(s, (Unpinned, v))))
+                | None -> failwith (sprintf "symbol %s not found" s)
+            | _                     -> failwith (sprintf "pin requires exactly one symbol argument")
+
+
+
 open BuiltIn
 
 
 let getBuiltIns =
     [|
-        "lambda", Node.Special (lambda Node.LambdaEvalArgs)
-        "macro",  Node.Special (lambda Node.LambdaRawArgs)
-        "define", Node.Special define
-        "if",     Node.Special if_then_else
-        "eval",   Node.Special eval
-        "quote",  Node.Special quote
+        "lambda",           (Pinned, Node.Special (lambda Node.LambdaEvalArgs))
+        "macro",            (Pinned, Node.Special (lambda Node.LambdaRawArgs))
+        "if",               (Pinned, Node.Special if_then_else)
+        "eval",             (Pinned, Node.Special eval)
+        "quote",            (Pinned, Node.Special quote)
+        "define",           (Pinned, Node.Special Symbol.define)
+        "symbol.define",    (Pinned, Node.Special Symbol.define)
+        "assign",           (Pinned, Node.Special Symbol.assign)
+        "symbol.assign",    (Pinned, Node.Special Symbol.assign)
+        "symbol.pin",       (Pinned, Node.Special (Symbol.pin))
+        "symbol.unpin",     (Pinned, Node.Special (Symbol.unpin))
     |]
     |> Map.ofArray
 
