@@ -6,7 +6,7 @@
             if (string.eq? (symbol.to_string eqOp) "=")
             then {
                 define rest  (list.tail (list.tail ...));
-                eval (quote define (unquote name) (unquote rest));
+                quote define (unquote name) (unquote rest);
             } else { (); };
         });
 
@@ -20,19 +20,21 @@
         });
         f();
 
-        define a (let f2 = lambda() {
+        define ab (let f2 = lambda() {
             io.write "I am 2";
         });
         
-        io.write a;
+        //ab ();
 
         let f3 = lambda() {
             io.write "I am 3";
-            let a = real64.add -5.3 4.7;
-            io.write a; 
+            let ab = real64.add -5.3 4.7;
+            io.write ab; 
         };
         
         f3 ();
+
+        io.write eqOp;
 
         // f2[10][13];
     })()

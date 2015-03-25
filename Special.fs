@@ -29,16 +29,38 @@ module private BuiltIn =
         nl
         |> List.map(fun n -> (evalOne env n).Value)
      
+    and getSymbolList (nl: Node list) =
+        nl
+        |> List.map
+            (function
+             | Node.Symbol (s, td) -> s
+             | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
+
+    and zipVariadicArgs (env: Environment) (syms: string list) (args: Node list) (func: string) =
+        let argCount = syms.Length
+        let _, args, varargs =
+            args
+            |> List.fold(fun (i, args, varargs) e ->
+                if i < argCount 
+                then i + 1, e :: args, varargs
+                else i    , args     , e :: varargs) (0, [], [])
+
+        let env =
+            args
+            |> List.rev
+            |> List.zip syms
+            |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
+
+        let varargs = varargs |> List.rev
+
+        env.Add ("..." , (Unpinned, Node.List (Node.Symbol (func, TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
+
+    ///
+    /// macros
+    ///
     and applyLambdaRawArgs (variadic: ArgsType, syms: Node list) (body: Node list) (env: Environment) (args: Node list, td: TokenData) =
         let origEnv = env
-        let symList =
-            let symToString =
-                function
-                | Node.Symbol (s, td) -> s
-                | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column)
-            
-            syms
-            |> List.map symToString
+        let symList = getSymbolList syms
 
         let t =
             match args with
@@ -49,29 +71,7 @@ module private BuiltIn =
         let env =
             match variadic with
             | Variadic ->
-                let argCount = syms.Length
-                let _, args, varargs =
-                    t
-                    |> List.fold(fun (i, args, varargs) e ->
-                        if i < argCount 
-                        then i + 1, e :: args, varargs
-                        else i    , args     , e :: varargs) (0, [], [])
-
-                let env =
-                    args
-                    |> List.rev
-                    |> List.zip symList
-                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
-
-                let varargs = varargs |> List.rev
-
-                env.Add
-                    ("...",
-                      (Unpinned
-                      , Node.List
-                         (Node.Symbol
-                            ("quote"
-                            , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
+                zipVariadicArgs env symList args "quote"
 
             | NonVariadic ->
                 t
@@ -80,18 +80,21 @@ module private BuiltIn =
 
         let (newEnv, ret: Thunk<Node>) = evalBody env body
 
-        evalOne env ret.Value
+        //printfn "****\n\n%A\n" ret.Value
+
+        match ret.Value with
+        | Node.List(l, td) ->
+            match (eval origEnv (l, td)).Value with
+            | Node.Env e -> Thunk<_>.Final (Env e)
+            | _ -> failwith "macro requires the last statement to be evaluated to env type"
+        // evaluate the quote then evaluate the evaluated version
+        //match (evalOne origEnv (eval newEnv ret.Value).Value).Value with
+        //| Env env -> Thunk<_>.Final (Env env)
+        | _ -> failwith "macro requires the last statement to be evaluated to env type"
 
     and applyLambdaEvalArgs (variadic: ArgsType, syms: Node list) (body: Node list) (env: Environment) (args: Node list, td: TokenData) =
         let origEnv = env
-        let symList =
-            let symToString =
-                function
-                | Node.Symbol (s, td) -> s
-                | x                   -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column)
-            
-            syms
-            |> List.map symToString
+        let symList = getSymbolList syms
 
         let t =
             match args with
@@ -104,29 +107,7 @@ module private BuiltIn =
         let env =
             match variadic with
             | Variadic ->
-                let argCount = syms.Length
-                let _, args, varargs =
-                    t
-                    |> List.fold(fun (i, args, varargs) e ->
-                        if i < argCount 
-                        then i + 1, e :: args, varargs
-                        else i    , args     , e :: varargs) (0, [], [])
-
-                let env =
-                    args
-                    |> List.rev
-                    |> List.zip symList
-                    |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
-
-                let varargs = varargs |> List.rev
-
-                env.Add
-                    ("...",
-                      (Unpinned
-                      , Node.List
-                        (Node.Symbol
-                            ("list.from"
-                            , TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
+                zipVariadicArgs env symList args "list.from"
 
             | NonVariadic ->
                 t
@@ -161,7 +142,7 @@ module private BuiltIn =
             | Symbol (s, td) -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
             | xxxx -> failwith "Should never reach this point"
 
-    let rec eval (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =                  
+    and eval (env: Environment) (nl: Node list, td: TokenData) : Thunk<Node> =                  
         match nl with
         | x :: []   -> evalOne env x
         | _         -> apply env (nl, td)
@@ -223,7 +204,7 @@ module Symbol =
             match nl with
             | Node.Symbol (s, _) :: n :: [] ->
                 match env.TryFind s with
-                | Some (p, n) ->
+                | Some (p, _) ->
                     match p with
                     | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n))))
                     | Pinned    -> failwith (sprintf "symbol %s is pinned, cannot redefine it" s)
@@ -235,9 +216,9 @@ module Symbol =
             | Node.Symbol (s, _) :: n :: [] ->
                 let n = BuiltIn.evalOne env n
                 match env.TryFind s with
-                | Some (p, pn) ->
+                | Some (p, _) ->
                     match p with
-                    | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, pn))))
+                    | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n.Value))))
                     | Pinned    -> failwith (sprintf "symbol %s is pinned, cannot redefine it" s)
                 | None -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n.Value))))
             | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
