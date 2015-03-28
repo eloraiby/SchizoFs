@@ -172,33 +172,143 @@ let ListNode     l                        = List      l
 //
 //
 
-(*
-let isAlpha = function
-    | x when x >= 'a' && x <= 'z' -> Some x
-    | x when x >= 'A' && x <= 'Z' -> Some x
-    | _ -> None
+[<AutoOpenAttribute>]
+module private Private =
+    let isAlpha = function
+        | x when x >= 'a' && x <= 'z' -> true
+        | x when x >= 'A' && x <= 'Z' -> true
+        | _                           -> false
     
-let isDecimal = function
-    | x when x >= '0' && x <= '9' -> Some x
-    | _ -> None
+    let isDecimal = function
+        | x when x >= '0' && x <= '9' -> true
+        | _                           -> false
 
-let isHex = function
-    | x when x >= '0' && x <= '9' -> Some x
-    | x when x >= 'a' && x <= 'f' -> Some x
-    | x when x >= 'A' && x <= 'F' -> Some x
-    | _ -> None
+    let isHex = function
+        | x when x >= '0' && x <= '9' -> true
+        | x when x >= 'a' && x <= 'f' -> true
+        | x when x >= 'A' && x <= 'F' -> true
+        | _                           -> false
 
-let isAlphaNumberic = function
-    | x when x >= 'a' && x <= 'z' -> Some x
-    | x when x >= 'A' && x <= 'Z' -> Some x
-    | x when x >= '0' && x <= '9' -> Some x
-    | _ -> None
+    let isAlphaNumberic = function
+        | x when x >= 'a' && x <= 'z' -> true
+        | x when x >= 'A' && x <= 'Z' -> true
+        | x when x >= '0' && x <= '9' -> true
+        | _                           -> false
 
-type internal State = {
-    FileName    : string
-    String      : string
-    Offset      : int
-    LineNumber  : int    
-}
+    let isSpecial x =
+        match x with
+        | '.' | '\'' | '@' | '#'
+        | '?' | '_'             -> true
+        | _                     -> false
 
-*)
+    let isOperator x =
+        match x with
+        | '+' | '-' | '~' | '*'
+        | '/' | '%' | '|' | '&'
+        | '!' | '^' | ',' | ':'
+        | '=' | '<' | '>' | '$' -> true
+        | _                     -> false
+
+
+    type Token =
+        | TkTrue
+        | TkFalse
+        | TkSInt64      of int64
+        | TkReal64      of double
+        | TkSymbol      of string
+        | TkString      of string
+        | TkSc
+        | TkLeftBrace
+        | TkRightBrace
+        | TkLeftBracket
+        | TkRightBracket
+        | TkLeftParen
+        | TkRightParen
+        | TkNone
+        | TkInvalid
+
+    type TokenPass = {
+        Length      : int
+        Token       : Token
+    }
+
+    type State = {
+        FileName        : string
+        String          : string
+        AbsoluteOffset  : int
+        LineNumber      : int    
+    } with
+        member x.LengthToEnd    = x.String.Length - x.AbsoluteOffset
+        member x.Item i         = x.String.[x.AbsoluteOffset + i]
+        member x.GetSlice(s: int option, e: int option) =
+            match s with
+            | Some s ->
+                match e with
+                | Some e -> x.String.[s .. e]
+                | None   -> x.String.[s ..]
+            | None ->
+                match e with
+                | Some e -> x.String.[ .. e]
+                | None   -> x.String
+
+    let (|?>) (a: TokenPass * State, f: State -> TokenPass * State) : TokenPass * State =
+        let state = snd a
+        let tka   = fst a
+        let ret   = f state
+        if tka.Length > (fst ret).Length
+        then a
+        else ret
+
+    // advance as long as predicate is satisfied
+    let rec advanceAsLong (s: State) (offset: int) (pred: char -> bool) =
+        if offset < s.LengthToEnd && pred s.[offset]
+        then advanceAsLong s (offset + 1) pred
+        else offset
+
+    // advance until the predicate is satisfied
+    let rec advanceUntil (s: State) (offset: int) (pred: char -> bool) =
+        if offset < s.LengthToEnd && not (pred s.[offset])
+        then advanceUntil s (offset + 1) pred
+        else offset
+
+    /// op = op+
+    let readOperator (s: State) =
+        let opEnd = advanceAsLong s 0 isOperator
+        if opEnd <> 0
+        then { Length = opEnd
+               Token  = TkSymbol s.[0 .. opEnd - 1] }
+             , s
+        else { Length = 0
+               Token  = TkNone }
+             , s
+
+    /// symbol = (alpha | special) (alpha | special | digit)+
+    let readSymbol (s: State) =
+        if s.LengthToEnd > 0 && (isAlpha s.[0] || isSpecial s.[0])
+        then
+             let opEnd = advanceAsLong s 1 (fun x -> isAlpha x || isSpecial x || isDecimal x)
+             { Length = opEnd
+               Token  = TkSymbol s.String.[0 .. opEnd - 1] }
+             , s
+        else { Length = 0
+               Token = TkNone }
+             , s
+
+    // "//"any* -> \r\n
+    let readComment0 (s: State) =
+        if s.LengthToEnd >= 2 && s.[0] = '/' && s.[1] = '/'
+        then
+            let opEnd = advanceUntil s 2 (fun x -> match x with | '\r' | '\n' -> true | _ -> false)
+            { Length = opEnd
+              Token = TkNone }
+            , s
+        else { Length = 0
+               Token  = TkNone }
+             , s
+
+            
+
+
+
+
+

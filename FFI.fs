@@ -1,6 +1,7 @@
 ﻿module FFI
 
 open Ast
+open Microsoft.FSharp.Collections
 
 module private BuiltIn =
     module Predicate =
@@ -101,7 +102,8 @@ module private BuiltIn =
 
         let from (nl: Node list, td: TokenData) : Node =
             match nl with
-            | Node.String (s, _) :: [] -> Node.Symbol (s, td)
+            | Node.String (s, _) :: [] ->
+                Node.Symbol (s, td)
             | x -> failwith (sprintf "<symbol.from \"name\"> @ Line %d, Column %d : Expecting a string got %A" td.LineNumber td.Column x)
 
         let bin (f: string -> string -> 'A) (ap: 'A * TokenData -> Node) (nl: Node list, td: TokenData) : Node =
