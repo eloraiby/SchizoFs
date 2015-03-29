@@ -30,6 +30,8 @@ let (|>!) (a: 'A) (b: 'A -> 'B) = b a |> ignore; a
 
 [<EntryPoint>]
 let main argv = 
+    Ast.Private.testAll()
+
     if argv.Length = 1 then
         if IO.File.Exists argv.[0] then
             try
