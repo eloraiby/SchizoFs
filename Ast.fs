@@ -289,7 +289,7 @@ module (*private*) Private =
         if opEnd <> 0
         then
             let sym = s.[0 .. opEnd - 1]
-            if sym = "//" || sym = "/*" || sym = "*/"
+            if sym.Length >= 2 && (sym.[0..1] = "//" || sym.[0..1] = "/*" || sym.[0..1] = "*/")
             then { Length = 0
                    Token  = TkNone }
                  , s
@@ -337,9 +337,11 @@ module (*private*) Private =
     let testAll() =
         let operatorTests = [
             "",             ((?=) TkNone),              ((?=) 0)
-            "/*/",          ((?=) (TkSymbol "/*/")),    ((?=) 3)
+            "/*/",          ((?=) TkNone),              ((?=) 0)
             "//",           ((?=) TkNone),              ((?=) 0)
-            "/***/ hello",  ((?=) (TkSymbol "/***/")),  ((?=) 5)
+            "/**/",         ((?=) TkNone),              ((?=) 0)
+            "///",          ((?=) TkNone),              ((?=) 0)
+            "/-+-/ hello",  ((?=) (TkSymbol "/-+-/")),  ((?=) 5)
             "/*\n",         ((?=) TkNone),              ((?=) 0)
         ]
 
