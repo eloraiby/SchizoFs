@@ -1,4 +1,4 @@
-# 1 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 1 "Lexer.fsl"
  
 //
 // Schizo F# Referemce Compiler
@@ -35,7 +35,7 @@ let positionToTuple (file, p: Position) =
 let positionToTokenData (file, p: Position) =
     { TokenData.FileName = file; LineNumber = p.Line; Column = p.Column; Offset = p.AbsoluteOffset }
 
-# 38 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 38 "Lexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -160,141 +160,141 @@ and read_line_comment filename istream (lexbuf : Microsoft.FSharp.Text.Lexing.Le
 and _fslex_read filename istream _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 53 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 53 "Lexer.fsl"
                                   read filename istream lexbuf 
-# 165 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 165 "Lexer.fs"
           )
   | 1 -> ( 
-# 54 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 54 "Lexer.fsl"
                                   newline lexbuf; read filename istream lexbuf 
-# 170 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 170 "Lexer.fs"
           )
   | 2 -> ( 
-# 55 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 55 "Lexer.fsl"
                                   REAL64    (Real64Node     (float (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) 
-# 175 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 175 "Lexer.fs"
           )
   | 3 -> ( 
-# 56 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 56 "Lexer.fsl"
                                   INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) 
-# 180 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 180 "Lexer.fs"
           )
   | 4 -> ( 
-# 57 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 57 "Lexer.fsl"
                                   TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) 
-# 185 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 185 "Lexer.fs"
           )
   | 5 -> ( 
-# 58 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 58 "Lexer.fsl"
                                   FALSE     (BoolNode       false                   (positionToTuple(filename, lexbuf.StartPos))) 
-# 190 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 190 "Lexer.fs"
           )
   | 6 -> ( 
-# 59 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 59 "Lexer.fsl"
                                      read_line_comment filename istream lexbuf 
-# 195 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 195 "Lexer.fs"
           )
   | 7 -> ( 
-# 60 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 60 "Lexer.fsl"
                                      SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) 
-# 200 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 200 "Lexer.fs"
           )
   | 8 -> ( 
-# 61 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 61 "Lexer.fsl"
                                      SYMBOL    (SymbolNode     (lexeme lexbuf)         (positionToTuple(filename, lexbuf.StartPos))) 
-# 205 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 205 "Lexer.fs"
           )
   | 9 -> ( 
-# 62 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 62 "Lexer.fsl"
                                   read_string filename istream "" false lexbuf 
-# 210 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 210 "Lexer.fs"
           )
   | 10 -> ( 
-# 63 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 63 "Lexer.fsl"
                                   LEFT_BRACE  (positionToTokenData(filename, lexbuf.StartPos)) 
-# 215 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 215 "Lexer.fs"
           )
   | 11 -> ( 
-# 64 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 64 "Lexer.fsl"
                                   RIGHT_BRACE (positionToTokenData(filename, lexbuf.StartPos)) 
-# 220 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 220 "Lexer.fs"
           )
   | 12 -> ( 
-# 65 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 65 "Lexer.fsl"
                                   LEFT_BRACK  (positionToTokenData(filename, lexbuf.StartPos)) 
-# 225 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 225 "Lexer.fs"
           )
   | 13 -> ( 
-# 66 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 66 "Lexer.fsl"
                                   RIGHT_BRACK (positionToTokenData(filename, lexbuf.StartPos)) 
-# 230 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 230 "Lexer.fs"
           )
   | 14 -> ( 
-# 67 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 67 "Lexer.fsl"
                                      LEFT_PAREN  (positionToTokenData(filename, lexbuf.StartPos)) 
-# 235 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 235 "Lexer.fs"
           )
   | 15 -> ( 
-# 68 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 68 "Lexer.fsl"
                                      RIGHT_PAREN (positionToTokenData(filename, lexbuf.StartPos)) 
-# 240 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 240 "Lexer.fs"
           )
   | 16 -> ( 
-# 69 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 69 "Lexer.fsl"
                              SC          (positionToTokenData(filename, lexbuf.StartPos)) 
-# 245 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 245 "Lexer.fs"
           )
   | 17 -> ( 
-# 70 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 70 "Lexer.fsl"
                                   EOF 
-# 250 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 250 "Lexer.fs"
           )
   | 18 -> ( 
-# 71 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 71 "Lexer.fsl"
                                   raise (Exception (sprintf "SyntaxError: Unexpected char: '%s' Line: %d Column: %d" (lexeme lexbuf) (lexbuf.StartPos.Line+1) lexbuf.StartPos.Column)) 
-# 255 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 255 "Lexer.fs"
           )
   | _ -> failwith "read"
 (* Rule read_string *)
 and _fslex_read_string filename istream str ignorequote _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 75 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 75 "Lexer.fsl"
                                   if ignorequote then (read_string filename istream (str+"\\\"") false lexbuf)
                                      else STRING (StringNode (str) (positionToTuple(filename, lexbuf.StartPos))) 
-# 265 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 265 "Lexer.fs"
           )
   | 1 -> ( 
-# 77 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 77 "Lexer.fsl"
                                   read_string filename istream str true lexbuf 
-# 270 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 270 "Lexer.fs"
           )
   | 2 -> ( 
-# 78 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 78 "Lexer.fsl"
                                   read_string filename istream (str+(lexeme lexbuf)) false lexbuf 
-# 275 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 275 "Lexer.fs"
           )
   | 3 -> ( 
-# 79 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 79 "Lexer.fsl"
                                   raise (Exception ("String is not terminated")) 
-# 280 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 280 "Lexer.fs"
           )
   | _ -> failwith "read_string"
 (* Rule read_line_comment *)
 and _fslex_read_line_comment filename istream _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 83 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 83 "Lexer.fsl"
                                      read filename istream lexbuf 
-# 289 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 289 "Lexer.fs"
           )
   | 1 -> ( 
-# 84 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 84 "Lexer.fsl"
                                      read_line_comment filename istream lexbuf 
-# 294 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 294 "Lexer.fs"
           )
   | _ -> failwith "read_line_comment"
 
-# 85 "C:\Users\Wael\Projects\SchizoFS\Lexer.fsl"
+# 85 "Lexer.fsl"
   
-# 3000000 "C:\Users\Wael\Projects\SchizoFS\Lexer.fs"
+# 3000000 "Lexer.fs"
