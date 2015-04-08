@@ -173,7 +173,19 @@ let ListNode     l                        = List      l
 //
 
 [<AutoOpenAttribute>]
-module private Private =
+module (*private*) Private =
+
+    let (?=) a b =
+        if a = b
+        then ()
+        else raise (Exception(sprintf "%A is not equal to %A" a b))
+
+    let (?<>) a b =
+        if a <> b
+        then ()
+        else raise (Exception(sprintf "%A is equal to %A" a b))
+
+
     let isAlpha = function
         | x when x >= 'a' && x <= 'z' -> true
         | x when x >= 'A' && x <= 'Z' -> true
@@ -275,9 +287,15 @@ module private Private =
     let readOperator (s: State) =
         let opEnd = advanceAsLong s 0 isOperator
         if opEnd <> 0
-        then { Length = opEnd
-               Token  = TkSymbol s.[0 .. opEnd - 1] }
-             , s
+        then
+            let sym = s.[0 .. opEnd - 1]
+            if sym.Length >= 2 && (sym.[0..1] = "//" || sym.[0..1] = "/*" || sym.[0..1] = "*/")
+            then { Length = 0
+                   Token  = TkNone }
+                 , s
+            else { Length = opEnd
+                   Token  = TkSymbol sym }
+                 , s
         else { Length = 0
                Token  = TkNone }
              , s
@@ -305,6 +323,46 @@ module private Private =
         else { Length = 0
                Token  = TkNone }
              , s
+
+    let unitTestFunction (f: State -> TokenPass * State) (l: (string * (Token -> unit) * (int -> unit)) list) =
+        l
+        |> List.map
+            (fun (str, tkF, lF) ->
+                let state = { State.AbsoluteOffset = 0; State.FileName = ""; State.LineNumber = 0; State.String = str }
+                let tok, state = f state
+                tkF tok.Token
+                lF tok.Length)
+        |> ignore
+
+    let testAll() =
+        let operatorTests = [
+            "",             ((?=) TkNone),              ((?=) 0)
+            "/*/",          ((?=) TkNone),              ((?=) 0)
+            "//",           ((?=) TkNone),              ((?=) 0)
+            "/**/",         ((?=) TkNone),              ((?=) 0)
+            "///",          ((?=) TkNone),              ((?=) 0)
+            "/-+-/ hello",  ((?=) (TkSymbol "/-+-/")),  ((?=) 5)
+            "/*\n",         ((?=) TkNone),              ((?=) 0)
+        ]
+
+        let comment0Tests = [
+            "",             ((?=) TkNone),              ((?=) 0)
+            "/*/",          ((?=) TkNone),              ((?=) 0)
+            "//",           ((?=) TkNone),              ((?=) 2)
+            "// hello",     ((?=) TkNone),              ((?=) 8)
+            "//\n",         ((?=) TkNone),              ((?=) 2)
+        ]
+
+        operatorTests
+        |> unitTestFunction readOperator
+
+        comment0Tests
+        |> unitTestFunction readComment0
+
+        // 
+
+
+
 
             
 
