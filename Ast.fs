@@ -54,7 +54,7 @@ type Node =
     | Tag      of string        * Node * TokenData
     | List     of Node list     * TokenData
     | FFI      of (Node list * TokenData -> Node)
-    | Special  of (Environment -> (Node list * TokenData) -> Thunk<Node>)
+    | Special  of (Environment -> (Node list * TokenData) -> Thunk)
     | LambdaRawArgs  of LambdaDetail * TokenData
     | LambdaEvalArgs of LambdaDetail * TokenData
     | Except   of Node          * TokenData
@@ -103,11 +103,11 @@ and LambdaDetail = {
     Body        : Node list
 }                    
 and Environment = Map<string, Pin * Node>
-and Thunk<'A> =
-    | Continue of (unit -> Thunk<'A>)
-    | Final    of 'A
+and Thunk =
+    | Continue of (unit -> Thunk)
+    | Final    of Node
 
-type Thunk<'A>
+type Thunk
 with
     member x.Value   =
         match x with
