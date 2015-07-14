@@ -136,13 +136,13 @@ module private BuiltIn =
                                                 else writeOne n
                                                      true) false
                                |> ignore
-                    | Node.FFI     _        -> printf "<ffi>"
-                    | Node.Special _        -> printf "<special>"
-                    | Node.LambdaRawArgs  _ -> printf "<lambda.rawargs>"
-                    | Node.LambdaEvalArgs _ -> printf "<lambda.evalargs>"
-                    | Node.Env     env      -> printf "<Environment %A>" env
-                    | Node.Tag    (s, n, _) -> printf "<Tag: %s>" s; writeOne n
-                    | Node.Except (e, _)    -> printf "<Exception>"; writeOne e
+                    | Node.FFI      _        -> printf "<ffi>"
+                    | Node.Special  _        -> printf "<special>"
+                    | Node.Macro    _        -> printf "<macro>"
+                    | Node.Function _        -> printf "<lambda>"
+                    | Node.Env      env      -> printf "<Environment %A>" env
+                    | Node.Tag     (s, n, _) -> printf "<Tag: %s>" s; writeOne n
+                    | Node.Except  (e, _)    -> printf "<Exception>"; writeOne e
                 
                 printf "("
                 writeOne h

@@ -17,13 +17,13 @@ module private BuiltIn =
         | Env _
         | Tag _
         | Except _
-        | LambdaRawArgs _
-        | LambdaEvalArgs _  -> Thunk.Final n
+        | Macro _
+        | Function _  -> Thunk.Final n
         | Symbol (s, td)    ->
             match env.TryFind s with
             | Some (_, v) -> Thunk.Final ((evalOne (env, v)).Value) // evaluate lazily (macro language/late binding)
             | None        -> Thunk.Final n
-        | List (nl, td)     -> apply env (nl, td)
+        | List (nl, td)     -> apply (env, nl, td)
 
     and evalList (env: Environment, nl: Node list) =
         nl
@@ -58,7 +58,7 @@ module private BuiltIn =
     ///
     /// apply a macro
     ///
-    and applyLambdaRawArgs (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+    and applyMacroLambda (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
 
@@ -78,13 +78,13 @@ module private BuiltIn =
                 |> List.zip symList
                 |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
-        let (newEnv, ret: Thunk) = evalBody env body
+        let (newEnv, ret: Thunk) = evalBody (env, body)
 
         //printfn "****\n\n%A\n" ret.Value
 
         match ret.Value with
         | Node.List(l, td) ->
-            match (eval origEnv (l, td)).Value with
+            match (eval (origEnv, l, td)).Value with
             | Node.Env e -> Thunk.Final (Env e)
             | _ -> failwith "macro requires the last statement to be evaluated to env type"
         // evaluate the quote then evaluate the evaluated version
@@ -95,7 +95,7 @@ module private BuiltIn =
     ///
     /// apply a lambda
     ///
-    and applyLambdaEvalArgs (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+    and applyFunctionLambda (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
 
@@ -117,11 +117,11 @@ module private BuiltIn =
                 |> List.zip symList
                 |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
-        let newEnv, ret = evalBody env body
+        let newEnv, ret = evalBody (env, body)
 
         ret
 
-    and evalBody env body =
+    and evalBody (env, body) =
         body
         |> List.fold
             (fun (env: Environment, last: Thunk) n ->
@@ -132,34 +132,34 @@ module private BuiltIn =
                 env, evalOne (env, n)) (env, Thunk.Final(Node.Unit TokenData.Empty))
 
 
-    and apply (env: Environment) (nl: Node list, td: TokenData) =
+    and apply (env: Environment, nl: Node list, td: TokenData) =
         match nl with
         | []     -> Thunk.Final (Node.List (nl, td))
         | h :: t ->
                                    
             match (evalOne (env, h)).Value with
             | FFI f     -> Thunk.Final (f (evalList (env, t), td))
-            | Special f -> f env (t, td)
-            | LambdaRawArgs  ({ ArgSymbols = syms; Body = body }, td) -> applyLambdaRawArgs (fst syms, snd syms, body, env, t, td)
-            | LambdaEvalArgs ({ ArgSymbols = syms; Body = body }, td) -> applyLambdaEvalArgs (fst syms, snd syms, body,  env, t, td)
+            | Special f -> f (env, t, td)
+            | Macro    ({ ArgSymbols = syms; Body = body }, td) -> applyMacroLambda    (fst syms, snd syms, body, env, t, td)
+            | Function ({ ArgSymbols = syms; Body = body }, td) -> applyFunctionLambda (fst syms, snd syms, body,  env, t, td)
             | Symbol (s, td) -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
             | xxxx -> failwith "Should never reach this point"
 
-    and eval (env: Environment) (nl: Node list, td: TokenData) : Thunk =                  
+    and eval (env: Environment, nl: Node list, td: TokenData) : Thunk =                  
         match nl with
         | x :: []   -> evalOne (env, x)
-        | _         -> apply env (nl, td)
+        | _         -> apply (env, nl, td)
 
-    let if_then_else (env: Environment) (nl: Node list, td: TokenData) : Thunk =
+    let if_then_else (env: Environment, nl: Node list, td: TokenData) : Thunk =
         match nl with
         | cond :: Node.Symbol ("then", _) :: Node.List(thenBody, _) :: Node.Symbol ("else", _) :: Node.List(elseBody, _) :: [] ->
             match (evalOne (env, cond)).Value with
-            | Node.Bool (true, _)    -> evalBody env thenBody |> snd
-            | Node.Bool (flase, _)   -> evalBody env elseBody |> snd
+            | Node.Bool (true, _)    -> evalBody (env, thenBody) |> snd
+            | Node.Bool (flase, _)   -> evalBody (env, elseBody) |> snd
             | x                      -> failwith (sprintf "if expression @ line %d, column %d expects a boolean condition, got %A" td.LineNumber td.Column x)
         | x -> failwith (sprintf "if expression @ line %d, column %d should have the form <if (cond) then {then body} else {else body}>, got %A" td.LineNumber td.Column x)
 
-    let lambda (lam: LambdaDetail * TokenData -> Node) (env: Environment) (nl: Node list, td: TokenData) : Thunk = 
+    let lambda (lam: LambdaDetail * TokenData -> Node) (env: Environment, nl: Node list, td: TokenData) : Thunk = 
         match nl with
         | Node.List (args, _) :: Node.List (body, _) :: [] ->
 
@@ -181,14 +181,14 @@ module private BuiltIn =
         | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(lam ({ ArgSymbols = NonVariadic, [];   Body = body }, td))
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
-    let quote (env: Environment) (nl: Node list, td: TokenData) : Thunk =
+    let quote (env: Environment, nl: Node list, td: TokenData) : Thunk =
         // Note: unquote will splice it in place
         let rec transform (n: Node list) =
             match n with
             | Symbol ("unquote", td) :: t ->
                 match t with
                 | h :: []  -> (evalOne (env, h)).Value
-                | h :: tt  -> (apply env (t, td)).Value
+                | h :: tt  -> (apply (env, t, td)).Value
                 | []       -> failwith "unquote requires arguments!"
             | h :: t ->
                 let tail =
@@ -204,7 +204,7 @@ module private BuiltIn =
          
 module Symbol =
         // bind a value to a symbol without evaluating
-        let define (env: Environment) (nl: Node list, td: TokenData) : Thunk =
+        let define (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
             | Node.Symbol (s, _) :: n :: [] ->
                 match env.TryFind s with
@@ -216,7 +216,7 @@ module Symbol =
             | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
         // evaluate before binding the value to the symbol
-        let assign (env: Environment) (nl: Node list, td: TokenData) : Thunk =
+        let assign (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
             | Node.Symbol (s, _) :: n :: [] ->
                 let n = BuiltIn.evalOne (env, n)
@@ -229,7 +229,7 @@ module Symbol =
             | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
         // if a symbol is pinned it cannot be reassigned
-        let pin (env: Environment) (nl: Node list, td: TokenData) : Thunk =
+        let pin (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
             | Node.Symbol (s, td) :: [] -> 
                 match env.TryFind s with
@@ -238,7 +238,7 @@ module Symbol =
             | _                     -> failwith (sprintf "pin requires exactly one symbol argument")
 
         // unpin a pinned symbol for reassigning
-        let unpin (env: Environment) (nl: Node list, td: TokenData) : Thunk =
+        let unpin (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
             | Node.Symbol (s, td) :: [] -> 
                 match env.TryFind s with
@@ -253,8 +253,8 @@ open BuiltIn
 
 let getBuiltIns =
     [|
-        "lambda",           (Pinned, Node.Special (lambda Node.LambdaEvalArgs))
-        "macro",            (Pinned, Node.Special (lambda Node.LambdaRawArgs))
+        "lambda",           (Pinned, Node.Special (lambda Node.Function))
+        "macro",            (Pinned, Node.Special (lambda Node.Macro))
         "if",               (Pinned, Node.Special if_then_else)
         "eval",             (Pinned, Node.Special eval)
         "quote",            (Pinned, Node.Special quote)
@@ -269,6 +269,6 @@ let getBuiltIns =
 
 let eval (env: Environment) (n: Node option) : Node =
     match n with
-    | Some (Node.List (n, td)) -> (eval env (n, td)).Value
+    | Some (Node.List (n, td)) -> (eval (env, n, td)).Value
     | Some n -> n
     | None -> Node.Unit (TokenData.New("", 0, 0, 0))

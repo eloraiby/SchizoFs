@@ -54,9 +54,9 @@ type Node =
     | Tag      of string        * Node * TokenData
     | List     of Node list     * TokenData
     | FFI      of (Node list * TokenData -> Node)
-    | Special  of (Environment -> (Node list * TokenData) -> Thunk)
-    | LambdaRawArgs  of LambdaDetail * TokenData
-    | LambdaEvalArgs of LambdaDetail * TokenData
+    | Special  of (Environment * (Node list) * TokenData -> Thunk)
+    | Macro    of LambdaDetail * TokenData
+    | Function of LambdaDetail * TokenData
     | Except   of Node          * TokenData
     | Env      of Environment
     // error can be a symbol and this can get shadowed if someone redefines it
@@ -75,8 +75,8 @@ type Node =
             | Node.Tag    (t0, n0, _), Node.Tag (t1, n1, _)   -> t0 = t1 && n0 = n1
             | Node.FFI     f0,     Node.FFI     f1     -> failwith (sprintf "Cannot compare functions!")
             | Node.Special f0,     Node.Special f1     -> failwith (sprintf "Cannot compare specials!")
-            | Node.LambdaRawArgs (ld0, _), Node.LambdaRawArgs (ld1, _) -> ld0 = ld1
-            | Node.LambdaEvalArgs (ld0, _), Node.LambdaEvalArgs (ld1, _) -> ld0 = ld1
+            | Node.Macro (ld0, _), Node.Macro (ld1, _) -> ld0 = ld1
+            | Node.Function (ld0, _), Node.Function (ld1, _) -> ld0 = ld1
             | Node.Except (n0, _), Node.Except (n1, _) -> n0 = n1
             | Node.Env     e0,     Node.Env     e1     -> e0 = e1
             | _ -> false
@@ -133,8 +133,8 @@ with
         | List     (_, td) -> td
         | FFI      _       -> failwith "FFI has no token data"
         | Special  _       -> failwith "Special has no token data"
-        | LambdaRawArgs   (_, td) -> td
-        | LambdaEvalArgs  (_, td) -> td
+        | Macro    (_, td) -> td
+        | Function (_, td) -> td
         | Except   (_, td) -> td
         | Env      _       -> failwith "Environment has no token data"
         
