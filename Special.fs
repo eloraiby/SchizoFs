@@ -55,69 +55,7 @@ module private BuiltIn =
 
         env.Add ("..." , (Unpinned, Node.List (Node.Symbol (func, TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
 
-    ///
-    /// apply a macro
-    ///
-(*    and applyMacroLambda (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
-        let origEnv = env
-        let symList = getSymbolList syms
 
-        let t =
-            match args with
-            | []                    -> failwith (sprintf "<lambda/macro> expected args, got no arguments @ line %d, column %d" td.LineNumber td.Column)
-            | Node.Unit _ :: []     -> []
-            | t                     -> t
-            
-        let env =
-            match variadic with
-            | Variadic ->
-                zipVariadicArgs (env, symList, args, "quote")
-
-            | NonVariadic ->
-                t
-                |> List.zip symList
-                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
-
-        let (newEnv, ret: Thunk) = evalBody (env, body)
-
-        match ret.Value with
-        | Node.List(l, td) ->
-            match (eval (origEnv, l, td)).Value with
-            | Node.Env e -> Thunk.Final (Env e)
-            | _ -> failwith "macro requires the last statement to be evaluated to env type"
-
-        | _ -> failwith "macro requires the last statement to be evaluated to env type"
-
-
-    ///
-    /// apply a lambda
-    ///
-    and applyFunctionLambda (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
-        let origEnv = env
-        let symList = getSymbolList syms
-
-        let t =
-            match args with
-            | []                    -> failwith (sprintf "<lambda/macro> expected args, got no arguments @ line %d, column %d" td.LineNumber td.Column)
-            | Node.Unit _ :: []     -> []
-            | t                     -> t
-            
-        let t = evalList (env, t)
-
-        let env =
-            match variadic with
-            | Variadic ->
-                zipVariadicArgs (env, symList, args, "list.from")
-
-            | NonVariadic ->
-                t
-                |> List.zip symList
-                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
-
-        let newEnv, ret = evalBody (env, body)
-
-        ret
-*)
     and applyLambda (evalFunc: Environment * Node list -> Node list, symName: string) (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
