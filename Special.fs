@@ -58,7 +58,7 @@ module private BuiltIn =
     ///
     /// apply a macro
     ///
-    and applyMacroLambda (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+(*    and applyMacroLambda (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
 
@@ -88,6 +88,7 @@ module private BuiltIn =
 
         | _ -> failwith "macro requires the last statement to be evaluated to env type"
 
+
     ///
     /// apply a lambda
     ///
@@ -116,7 +117,7 @@ module private BuiltIn =
         let newEnv, ret = evalBody (env, body)
 
         ret
-
+*)
     and applyLambda (evalFunc: Environment * Node list -> Node list, symName: string) (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
@@ -142,6 +143,20 @@ module private BuiltIn =
         let newEnv, ret = evalBody (env, body)
 
         ret
+    
+    and applyMacro (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+        let origEnv = env
+        let ret : Thunk = applyLambda ((fun (_, nl) -> nl), "quote") (variadic, syms, body, env, args, td)
+        match ret.Value with
+        | Node.List(l, td) ->
+            match (eval (origEnv, l, td)).Value with
+            | Node.Env e -> Thunk.Final (Env e)
+            | _ -> failwith "macro requires the last statement to be evaluated to env type"
+
+        | _ -> failwith "macro requires the last statement to be evaluated to env type"
+
+    and applyFunction (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+        applyLambda (evalList, "list.from") (variadic, syms, body, env, args, td)
 
     and evalBody (env, body) =
         body
@@ -162,8 +177,8 @@ module private BuiltIn =
             match (evalOne (env, h)).Value with
             | FFI f     -> Thunk.Final (f (evalList (env, t), td))
             | Special f -> f (env, t, td)
-            | Macro    ({ ArgSymbols = syms; Body = body }, td) -> applyMacroLambda    (fst syms, snd syms, body, env, t, td)
-            | Function ({ ArgSymbols = syms; Body = body }, td) -> applyFunctionLambda (fst syms, snd syms, body,  env, t, td)
+            | Macro    ({ ArgSymbols = syms; Body = body }, td) -> applyMacro    (fst syms, snd syms, body, env, t, td)
+            | Function ({ ArgSymbols = syms; Body = body }, td) -> applyFunction (fst syms, snd syms, body,  env, t, td)
             | Symbol (s, td) -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
             | xxxx -> failwith "Should never reach this point"
 
