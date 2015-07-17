@@ -176,6 +176,9 @@ module private BuiltIn =
             | [] -> failwith "cannot transform nothing"
 
         Thunk.Final(transform nl)
+
+    let tryWith (env: Environment, nl: Node list, td: TokenData) : Thunk =
+       failwith "unimplemented"
          
 module Symbol =
         // bind a value to a symbol without evaluating
