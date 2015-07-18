@@ -178,7 +178,9 @@ module private BuiltIn =
         Thunk.Final(transform nl)
 
     let tryWith (env: Environment, nl: Node list, td: TokenData) : Thunk =
-       failwith "unimplemented"
+        match nl with
+        | exp :: Symbol("with", td) :: body :: [] -> evalOne (env, exp)
+        | _ -> failwith "try ... with ... syntax error"
          
 module Symbol =
         // bind a value to a symbol without evaluating
