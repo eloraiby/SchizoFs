@@ -97,14 +97,19 @@ module private BuiltIn =
         applyLambda (evalList, "list.from") (variadic, syms, body, env, args, td)
 
     and evalBody (env, body) =
+        let origEnv = env
         body
         |> List.fold
             (fun (env: Environment, last: Thunk) n ->
-                let env =
-                    match last.Value with
-                    | Node.Env env -> env
-                    | _            -> env
-                env, evalOne (env, n)) (env, Thunk.Final(Node.Unit TokenData.Empty))
+                let last = last.Value
+                match last with
+                | Node.Except (x, _) -> (origEnv, Thunk.Final last)
+                | _ ->
+                    let env =
+                        match last with
+                        | Node.Env env -> env
+                        | _            -> env
+                    env, evalOne (env, n)) (env, Thunk.Final(Node.Unit TokenData.Empty))
 
 
     and apply (env: Environment, nl: Node list, td: TokenData) =
