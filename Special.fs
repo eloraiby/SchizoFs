@@ -179,7 +179,13 @@ module private BuiltIn =
 
     let tryWith (env: Environment, nl: Node list, td: TokenData) : Thunk =
         match nl with
-        | exp :: Symbol("with", td) :: body :: [] -> evalOne (env, exp)
+        | Node.List (tryBody, _) :: Symbol("with", td) :: Symbol(sym, _) :: withBody :: [] ->
+            let _, ret = (evalBody (env, tryBody))
+           
+            let v = ret.Value
+            match ret.Value with
+            | Node.Except (n, td) -> Thunk.Continue (fun _ -> evalOne (env.Add(sym, (Pin.Unpinned, n)), withBody))
+            | _ -> Thunk.Final v
         | _ -> failwith "try ... with ... syntax error"
          
 module Symbol =
@@ -244,6 +250,7 @@ let getBuiltIns =
         "symbol.assign",    (Pinned, Node.Special Symbol.assign)
         "symbol.pin",       (Pinned, Node.Special Symbol.pin)
         "symbol.unpin",     (Pinned, Node.Special Symbol.unpin)
+        "try",              (Pinned, Node.Special tryWith)
     |]
     |> Map.ofArray
 

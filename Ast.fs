@@ -111,7 +111,12 @@ type Thunk
 with
     member x.Value   =
         match x with
-        | Continue f -> f().Value
+        | Continue f ->
+           let rec loop v =
+                match v with
+                | Final v -> v
+                | Continue f -> loop v
+           loop x
         | Final v    -> v
     
     member x.Step   =
