@@ -1,41 +1,43 @@
 ﻿{
-    (lambda () {
-        define let (macro (...) {
-            define name  (list.head ...);
-            define eqOp (list.head (list.tail ...));
-            if (string.eq? (symbol.to_string eqOp) "=")
-            then {
-                define rest  (list.tail (list.tail ...));
-                quote define (unquote name) (unquote rest);
-            } else { (); };
-        });
+    (lambda (x) {
+        //define let (macro (...) {
+            //define name  (list.head ...);
+            //define eqOp (list.head (list.tail ...));
+            //if (string.eq? (symbol.to_string eqOp) "=")
+            //then {
+                //define rest  (list.tail (list.tail ...));
+                //quote define (unquote name) (unquote rest);
+            //} else { (); };
+        //});
 
-        define   h "hello";
-        io.write h;       
-        io.write "Hello World";
-        io.write "Again";
+        //define   h "hello";
+        //io.write h;       
+        //io.write "Hello World";
+        //io.write "Again";
         
-        define f (lambda () {
-            io.write "I am";
-        });
-        f();
+        //define f (lambda () {
+            //io.write "I am";
+        //});
+        //f();
 
-        define ab (let f2 = lambda() {
-            io.write "I am 2";
-        });
+        //define ab (let f2 = lambda() {
+            //io.write "I am 2";
+        //});
         
         //ab ();
 
-        let f3=lambda() {
-            io.write "I am 3";
-            let ab = real64.add -5.3 4.7;
-            io.write ab; 
-        };
+        //let f3=lambda() {
+            //io.write "I am 3";
+            //let ab = real64.add -5.3 4.7;
+            //io.write ab; 
+        //};
         
-        f3 ();
+        // f3 ();
 
-        io.write eqOp;
+        //io.write eqOp;
+        return x;
+        //io.write "reached this\n";
 
         // f2[10][13];
-    })()
+    }) 13;
 }

@@ -65,6 +65,11 @@ module private BuiltIn =
         | Node.String (s0, _) :: Node.String(s1, _) :: [] -> ap ((f s0 s1), td)
         | _              -> failwith (sprintf "function requires 2 string elements! @ Line %d, Column %d" td.LineNumber td.Column)
 
+    let ret (nl: Node list, td: TokenData) : Node = // required for brace expression
+        match nl with
+        | x :: [] -> x
+        | _ -> failwith (sprintf "return requires one element! @ Line %d, Column %d" td.LineNumber td.Column)
+
     module List =
         let head (nl: Node list, td: TokenData) : Node =
             match nl with
@@ -158,6 +163,7 @@ open BuiltIn
 
 let getBuiltIns =
     [|
+        "return",           (Pinned, Node.FFI ret)
         "pred.equal?",      (Pinned, Node.FFI Predicate.areEqual)
         "pred.symbol?",     (Pinned, Node.FFI Predicate.isSymbol)
         "pred.sint32?",     (Pinned, Node.FFI Predicate.isSInt32)

@@ -59,6 +59,7 @@ type Node =
     | Function of LambdaDetail * TokenData
     | Except   of Node          * TokenData
     | Env      of Environment
+
     // error can be a symbol and this can get shadowed if someone redefines it
     // | Error of Node
     override x.Equals(obj) =
@@ -112,7 +113,8 @@ with
     member x.Value   =
         match x with
         | Continue f ->
-           let rec loop v =
+           let rec loop (v: Thunk) =
+                let v = v.Step
                 match v with
                 | Final v -> v
                 | Continue f -> loop v
