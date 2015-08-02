@@ -64,7 +64,7 @@ module private BuiltIn =
         env.Add ("..." , (Unpinned, Node.List (Node.Symbol (func, TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
 
 
-    and applyLambda (evalFunc: Environment * Node list -> Node list, symName: string) (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+    and applyLambda (argEvalFunc: Environment * Node list -> Node list, symName: string) (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
 
@@ -74,7 +74,7 @@ module private BuiltIn =
             | Node.Unit _ :: []     -> []
             | t                     -> t
             
-        let t = evalFunc (env, t)
+        let t = argEvalFunc (env, t)
 
         let env =
             match variadic with
@@ -252,7 +252,7 @@ let getBuiltIns =
 
 let eval (env: Environment) (n: Node option) : Node =
     match n with
-    | Some (Node.List (n, td) as nl) -> (eval (env, nl, td)).Value
+    | Some (Node.List (nl, td)) -> Node.List (evalList td (env, nl), td)
     | Some n -> n
     | None -> Node.Unit (TokenData.New("", 0, 0, 0))
 

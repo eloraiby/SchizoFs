@@ -41,8 +41,9 @@ let main argv =
                 
                 IO.File.ReadAllText argv.[0]
                 |> parse argv.[0]
-                //|>! printfn "%A"
+
                 |> Special.eval env
+                |>! printfn "%A"
                 |> ignore
 
                 printfn "%A" argv
