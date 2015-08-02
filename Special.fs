@@ -44,27 +44,7 @@ module private BuiltIn =
              | Node.Symbol (s, td) -> s
              | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
 
-    and zipVariadicArgs (env: Environment, syms: string list, args: Node list, func: string) =
-        let argCount = syms.Length
-        let _, args, varargs =
-            args
-            |> List.fold(fun (i, args, varargs) e ->
-                if i < argCount 
-                then i + 1, e :: args, varargs
-                else i    , args     , e :: varargs) (0, [], [])
-
-        let env =
-            args
-            |> List.rev
-            |> List.zip syms
-            |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
-
-        let varargs = varargs |> List.rev
-
-        env.Add ("..." , (Unpinned, Node.List (Node.Symbol (func, TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
-
-
-    and applyLambda (argEvalFunc: Environment * Node list -> Node list, symName: string) (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+    and applyLambda (evalFunc: Environment * Node list -> Node list, symName: string) (syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
 
@@ -74,7 +54,7 @@ module private BuiltIn =
             | Node.Unit _ :: []     -> []
             | t                     -> t
             
-        let t = argEvalFunc (env, t)
+        let t = evalFunc (env, t)
 
         let env =
             match variadic with
@@ -252,7 +232,7 @@ let getBuiltIns =
 
 let eval (env: Environment) (n: Node option) : Node =
     match n with
-    | Some (Node.List (nl, td)) -> Node.List (evalList td (env, nl), td)
+    | Some (Node.List (n, td) as nl) -> (eval (env, nl, td)).Value
     | Some n -> n
     | None -> Node.Unit (TokenData.New("", 0, 0, 0))
 
