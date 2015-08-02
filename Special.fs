@@ -27,8 +27,8 @@ module private BuiltIn =
             match (eval (env, h, td)).Value with
             | FFI f     -> Thunk.Final (f (evalList td (env, t), td))
             | Special f -> f (env, t, td)
-            | Macro    ({ ArgSymbols = syms; Body = body }, td) -> applyMacro    (fst syms, snd syms, body, env, t, td)
-            | Function ({ ArgSymbols = syms; Body = body }, td) -> applyFunction (fst syms, snd syms, body,  env, t, td)
+            | Macro    ({ ArgSymbols = syms; Body = body }, td) -> applyMacro    (syms, body, env, t, td)
+            | Function ({ ArgSymbols = syms; Body = body }, td) -> applyFunction (syms, body,  env, t, td)
             | Symbol (s, td) -> failwith (sprintf "Couldn't find binding for symbol %s @ line %d, column %d" s td.LineNumber td.Column)
             | retVal -> failwith (sprintf "can't apply arguments %A to constant %A @ line %d, column %d" t retVal td.LineNumber td.Column)
         | List ([], td)     -> failwith "Should never reach this point"
@@ -44,27 +44,7 @@ module private BuiltIn =
              | Node.Symbol (s, td) -> s
              | x             -> failwith (sprintf "Expected a symbol, got %A @ line %d, column %d" x x.TokenData.LineNumber x.TokenData.Column))
 
-    and zipVariadicArgs (env: Environment, syms: string list, args: Node list, func: string) =
-        let argCount = syms.Length
-        let _, args, varargs =
-            args
-            |> List.fold(fun (i, args, varargs) e ->
-                if i < argCount 
-                then i + 1, e :: args, varargs
-                else i    , args     , e :: varargs) (0, [], [])
-
-        let env =
-            args
-            |> List.rev
-            |> List.zip syms
-            |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
-
-        let varargs = varargs |> List.rev
-
-        env.Add ("..." , (Unpinned, Node.List (Node.Symbol (func, TokenData.New("", 0, 0, 0)) :: varargs, TokenData.New("", 0, 0, 0))))
-
-
-    and applyLambda (evalFunc: Environment * Node list -> Node list, symName: string) (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+    and applyLambda (evalFunc: Environment * Node list -> Node list, symName: string) (syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
         let symList = getSymbolList syms
 
@@ -77,22 +57,17 @@ module private BuiltIn =
         let t = evalFunc (env, t)
 
         let env =
-            match variadic with
-            | Variadic ->
-                zipVariadicArgs (env, symList, args, symName)
-
-            | NonVariadic ->
-                t
-                |> List.zip symList
-                |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
+            t
+            |> List.zip symList
+            |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
 
         let newEnv, ret = evalBody td (env, body)
 
         ret
     
-    and applyMacro (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+    and applyMacro (syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
         let origEnv = env
-        let ret : Thunk = applyLambda ((fun (_, nl) -> nl), "quote") (variadic, syms, body, env, args, td)
+        let ret : Thunk = applyLambda ((fun (_, nl) -> nl), "quote") (syms, body, env, args, td)
         let ret = ret.Value
         match ret with
         | Node.List(l, td) ->
@@ -102,8 +77,8 @@ module private BuiltIn =
 
         | _ -> failwith "macro requires the last statement to be evaluated to env type"
 
-    and applyFunction (variadic: ArgsType, syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
-        applyLambda (evalList td, "list.from") (variadic, syms, body, env, args, td)
+    and applyFunction (syms: Node list, body: Node list, env: Environment, args: Node list, td: TokenData) =
+        applyLambda (evalList td, "list.from") (syms, body, env, args, td)
 
     and evalBody td (env, body: Node list) : Environment * Thunk =
         let origEnv = env
@@ -131,24 +106,8 @@ module private BuiltIn =
 
     let lambda (lam: LambdaDetail * TokenData -> Node) (env: Environment, nl: Node list, td: TokenData) : Thunk = 
         match nl with
-        | Node.List (args, _) :: Node.List (body, _) :: [] ->
-
-            let revSyms = args |> List.rev
-
-            let argSyms =
-                match revSyms.Head with
-                | Node.Symbol ("...", _) -> Variadic, revSyms.Tail |> List.rev
-                | _                      -> NonVariadic, args
-
-            revSyms.Tail
-            |> List.iter
-                (function
-                 | Node.Symbol ("...", td) -> failwith "<lambda/macro>: ellipsis \"...\" should always be the ending argument"
-                 | _ -> ())
-
-                     
-            Thunk.Final(lam ({ ArgSymbols = argSyms; Body = body }, td))
-        | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(lam ({ ArgSymbols = NonVariadic, [];   Body = body }, td))
+        | Node.List (args, _) :: Node.List (body, _) :: [] -> Thunk.Final(lam ({ ArgSymbols = args; Body = body }, td))
+        | Node.Unit  _ :: Node.List (body, _) :: []        -> Thunk.Final(lam ({ ArgSymbols = [];   Body = body }, td))
         | x -> failwith (sprintf "lambda expression @ line %d, column %d should have the form <lambda (args...) (body...)>, got %A" td.LineNumber td.Column x)
         
     let quote (env: Environment, nl: Node list, td: TokenData) : Thunk =

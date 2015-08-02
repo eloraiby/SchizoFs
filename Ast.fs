@@ -95,12 +95,8 @@ and Pin =
     | Pinned
     | Unpinned
 
-and ArgsType =
-    | Variadic    
-    | NonVariadic
-
 and LambdaDetail = {
-    ArgSymbols  : ArgsType * Node list
+    ArgSymbols  : Node list
     Body        : Node list
 }                    
 and Environment = Map<string, Pin * Node>
