@@ -21,8 +21,8 @@ module private BuiltIn =
         | Function _  -> Thunk.Final n
         | Symbol (s, td)    ->
             match env.TryFind s with
-            | Some (_, v) -> Thunk.Final ((eval (env, v, td)).Value) // evaluate lazily (macro language/late binding)
-            | None        -> Thunk.Final n
+            | Some v -> Thunk.Final ((eval (env, v, td)).Value) // evaluate lazily (macro language/late binding)
+            | None   -> Thunk.Final n
         | List (h :: t, td)     ->
             match (eval (env, h, td)).Value with
             | FFI f     -> Thunk.Final (f (evalList td (env, t), td))
@@ -59,7 +59,7 @@ module private BuiltIn =
         let env =
             t
             |> List.zip symList
-            |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, (Unpinned, v))) env
+            |> List.fold(fun (acc: Environment) (k, v) -> acc.Add(k, v)) env
 
         let newEnv, ret = evalBody td (env, body)
 
@@ -137,7 +137,7 @@ module private BuiltIn =
            
             let v = ret.Value
             match ret.Value with
-            | Node.Except (n, td) -> Thunk.Continue (fun _ -> eval (env.Add(sym, (Pin.Unpinned, n)), withBody, td))
+            | Node.Except (n, td) -> Thunk.Continue (fun _ -> eval (env.Add(sym, n), withBody, td))
             | _ -> Thunk.Final v
         | _ -> failwith "try ... with ... syntax error"
          
@@ -145,13 +145,7 @@ module Symbol =
         // bind a value to a symbol without evaluating
         let define (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
-            | Node.Symbol (s, _) :: n :: [] ->
-                match env.TryFind s with
-                | Some (p, _) ->
-                    match p with
-                    | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n))))
-                    | Pinned    -> failwith (sprintf "symbol %s is pinned, cannot redefine it" s)
-                | None -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n))))
+            | Node.Symbol (s, _) :: n :: [] -> Thunk.Final(Node.Env (env.Add(s, n)))
             | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
         // evaluate before binding the value to the symbol
@@ -159,33 +153,26 @@ module Symbol =
             match nl with
             | Node.Symbol (s, _) :: n :: [] ->
                 let n = BuiltIn.eval (env, n, td)
-                match env.TryFind s with
-                | Some (p, _) ->
-                    match p with
-                    | Unpinned  -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n.Value))))
-                    | Pinned    -> failwith (sprintf "symbol %s is pinned, cannot redefine it" s)
-                | None -> Thunk.Final(Node.Env (env.Add(s, (Unpinned, n.Value))))
+                Thunk.Final(Node.Env (env.Add(s, n.Value)))
             | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
-        // if a symbol is pinned it cannot be reassigned
-        let pin (env: Environment, nl: Node list, td: TokenData) : Thunk =
+        // forget a symbol
+        let forget (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
             | Node.Symbol (s, td) :: [] -> 
                 match env.TryFind s with
-                | Some (p, v) -> Thunk.Final (Env (env.Add(s, (Pinned, v))))
+                | Some v -> Thunk.Final (Env (env.Remove s))
                 | None -> failwith (sprintf "symbol %s not found" s)
-            | _                     -> failwith (sprintf "pin requires exactly one symbol argument")
+            | _                     -> failwith (sprintf "forget requires exactly one symbol argument")
 
-        // unpin a pinned symbol for reassigning
-        let unpin (env: Environment, nl: Node list, td: TokenData) : Thunk =
+        // add a symbol to an environment
+        let add2env (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
-            | Node.Symbol (s, td) :: [] -> 
+            | Node.Env env :: Node.Symbol (s, td) :: n :: [] -> 
                 match env.TryFind s with
-                | Some (p, v) -> Thunk.Final (Env (env.Add(s, (Unpinned, v))))
+                | Some v -> Thunk.Final (Env (env.Remove s))
                 | None -> failwith (sprintf "symbol %s not found" s)
-            | _                     -> failwith (sprintf "pin requires exactly one symbol argument")
-
-
+            | _                     -> failwith (sprintf "Error: add2env <env> <symbol> <body>")
 
 open BuiltIn
 
@@ -194,18 +181,15 @@ let _eval (env: Environment, nl: Node list, td: TokenData) : Thunk  =
 
 let getBuiltIns =
     [|
-        "lambda",           (Pinned, Node.Special (lambda Node.Function))
-        "macro",            (Pinned, Node.Special (lambda Node.Macro))
-        "if",               (Pinned, Node.Special if_then_else)
-        "eval",             (Pinned, Node.Special _eval)
-        "quote",            (Pinned, Node.Special quote)
-        "define",           (Pinned, Node.Special Symbol.define)
-        "symbol.define",    (Pinned, Node.Special Symbol.define)
-        "assign",           (Pinned, Node.Special Symbol.assign)
-        "symbol.assign",    (Pinned, Node.Special Symbol.assign)
-        "symbol.pin",       (Pinned, Node.Special Symbol.pin)
-        "symbol.unpin",     (Pinned, Node.Special Symbol.unpin)
-        "try",              (Pinned, Node.Special tryWith)
+        "lambda",           Node.Special (lambda Node.Function)
+        "macro",            Node.Special (lambda Node.Macro)
+        "if",               Node.Special if_then_else
+        "eval",             Node.Special _eval
+        "quote",            Node.Special quote
+        "define",           Node.Special Symbol.define
+        "assign",           Node.Special Symbol.assign
+        "forget",           Node.Special Symbol.forget
+        "try",              Node.Special tryWith
     |]
     |> Map.ofArray
 

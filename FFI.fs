@@ -163,58 +163,58 @@ open BuiltIn
 
 let getBuiltIns =
     [|
-        "return",           (Pinned, Node.FFI ret)
-        "pred.equal?",      (Pinned, Node.FFI Predicate.areEqual)
-        "pred.symbol?",     (Pinned, Node.FFI Predicate.isSymbol)
-        "pred.sint32?",     (Pinned, Node.FFI Predicate.isSInt32)
-        "pred.real64?",     (Pinned, Node.FFI Predicate.isReal64)
-        "pred.bool?",       (Pinned, Node.FFI Predicate.isBool  )
-        "pred.string?",     (Pinned, Node.FFI Predicate.isString)
-        "pred.list?",       (Pinned, Node.FFI Predicate.isList  )
-        "pred.ffi?",        (Pinned, Node.FFI Predicate.isFFI   )
-        "pred.special?",    (Pinned, Node.FFI Predicate.isSpecial)
+        "return",           Node.FFI ret
+        "pred.equal?",      Node.FFI Predicate.areEqual
+        "pred.symbol?",     Node.FFI Predicate.isSymbol
+        "pred.sint32?",     Node.FFI Predicate.isSInt32
+        "pred.real64?",     Node.FFI Predicate.isReal64
+        "pred.bool?",       Node.FFI Predicate.isBool  
+        "pred.string?",     Node.FFI Predicate.isString
+        "pred.list?",       Node.FFI Predicate.isList  
+        "pred.ffi?",        Node.FFI Predicate.isFFI   
+        "pred.special?",    Node.FFI Predicate.isSpecial
 
-        "sint64.add",       (Pinned, Node.FFI (binSInt32 (+) Node.SInt64))
-        "sint64.sub",       (Pinned, Node.FFI (binSInt32 (-) Node.SInt64))
-        "sint64.mul",       (Pinned, Node.FFI (binSInt32 (*) Node.SInt64))
-        "sint64.div",       (Pinned, Node.FFI (binSInt32 (/) Node.SInt64))
-        "sint64.mod",       (Pinned, Node.FFI (binSInt32 (%) Node.SInt64))
+        "sint64.add",       Node.FFI (binSInt32 (+) Node.SInt64)
+        "sint64.sub",       Node.FFI (binSInt32 (-) Node.SInt64)
+        "sint64.mul",       Node.FFI (binSInt32 (*) Node.SInt64)
+        "sint64.div",       Node.FFI (binSInt32 (/) Node.SInt64)
+        "sint64.mod",       Node.FFI (binSInt32 (%) Node.SInt64)
 
-        "real64.add",       (Pinned, Node.FFI (binReal32 (+) Node.Real64))
-        "real64.sub",       (Pinned, Node.FFI (binReal32 (-) Node.Real64))
-        "real64.mul",       (Pinned, Node.FFI (binReal32 (*) Node.Real64))
-        "real64.div",       (Pinned, Node.FFI (binReal32 (/) Node.Real64))
-        "real64.mod",       (Pinned, Node.FFI (binReal32 (%) Node.Real64))
+        "real64.add",       Node.FFI (binReal32 (+) Node.Real64)
+        "real64.sub",       Node.FFI (binReal32 (-) Node.Real64)
+        "real64.mul",       Node.FFI (binReal32 (*) Node.Real64)
+        "real64.div",       Node.FFI (binReal32 (/) Node.Real64)
+        "real64.mod",       Node.FFI (binReal32 (%) Node.Real64)
 
-        "real64.lt?",       (Pinned, Node.FFI (binSInt32 (<)  Node.Bool))
-        "real64.gt?",       (Pinned, Node.FFI (binSInt32 (>)  Node.Bool))
-        "real64.leq?",      (Pinned, Node.FFI (binSInt32 (<=) Node.Bool))
-        "real64.geq?",      (Pinned, Node.FFI (binSInt32 (>=) Node.Bool))
-        "real64.eq?",       (Pinned, Node.FFI (binSInt32 (=)  Node.Bool))
-        "real64.noteq?",    (Pinned, Node.FFI (binSInt32 (<>) Node.Bool))
+        "real64.lt?",       Node.FFI (binSInt32 (<)  Node.Bool)
+        "real64.gt?",       Node.FFI (binSInt32 (>)  Node.Bool)
+        "real64.leq?",      Node.FFI (binSInt32 (<=) Node.Bool)
+        "real64.geq?",      Node.FFI (binSInt32 (>=) Node.Bool)
+        "real64.eq?",       Node.FFI (binSInt32 (=)  Node.Bool)
+        "real64.noteq?",    Node.FFI (binSInt32 (<>) Node.Bool)
 
-        "sint64.lt?",       (Pinned, Node.FFI (binSInt32 (<)  Node.Bool))
-        "sint64.gt?",       (Pinned, Node.FFI (binSInt32 (>)  Node.Bool))
-        "sint64.leq?",      (Pinned, Node.FFI (binSInt32 (<=) Node.Bool))
-        "sint64.geq?",      (Pinned, Node.FFI (binSInt32 (>=) Node.Bool))
-        "sint64.eq?",       (Pinned, Node.FFI (binSInt32 (=)  Node.Bool))
-        "sint64.noteq?",    (Pinned, Node.FFI (binSInt32 (<>) Node.Bool))
+        "sint64.lt?",       Node.FFI (binSInt32 (<)  Node.Bool)
+        "sint64.gt?",       Node.FFI (binSInt32 (>)  Node.Bool)
+        "sint64.leq?",      Node.FFI (binSInt32 (<=) Node.Bool)
+        "sint64.geq?",      Node.FFI (binSInt32 (>=) Node.Bool)
+        "sint64.eq?",       Node.FFI (binSInt32 (=)  Node.Bool)
+        "sint64.noteq?",    Node.FFI (binSInt32 (<>) Node.Bool)
 
-        "list.head",        (Pinned, Node.FFI List.head)
-        "list.tail",        (Pinned, Node.FFI List.tail)
-        "list.cons",        (Pinned, Node.FFI List.cons)
-        "list.from",        (Pinned, Node.FFI List.from)
-        "list.rev",         (Pinned, Node.FFI List.rev )
+        "list.head",        Node.FFI List.head
+        "list.tail",        Node.FFI List.tail
+        "list.cons",        Node.FFI List.cons
+        "list.from",        Node.FFI List.from
+        "list.rev",         Node.FFI List.rev 
 
-        "symbol.to_string", (Pinned, Node.FFI Symbol.toString)
-        "symbol.from",      (Pinned, Node.FFI Symbol.from)
-        "symbol.eq?",       (Pinned, Node.FFI (Symbol.bin (=)  Node.Bool))
-        "symbol.noteq?",    (Pinned, Node.FFI (Symbol.bin (<>) Node.Bool))
+        "symbol.to_string", Node.FFI Symbol.toString
+        "symbol.from",      Node.FFI Symbol.from
+        "symbol.eq?",       Node.FFI (Symbol.bin (=)  Node.Bool)
+        "symbol.noteq?",    Node.FFI (Symbol.bin (<>) Node.Bool)
 
-        "string.eq?",       (Pinned, Node.FFI (binString (=)  Node.Bool))
-        "string.noteq?",    (Pinned, Node.FFI (binString (<>) Node.Bool))
+        "string.eq?",       Node.FFI (binString (=)  Node.Bool)
+        "string.noteq?",    Node.FFI (binString (<>) Node.Bool)
 
-        "io.write",         (Pinned, Node.FFI InOut.write)
+        "io.write",         Node.FFI InOut.write
     |]
     |> Map.ofArray
 

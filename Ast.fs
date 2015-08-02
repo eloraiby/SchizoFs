@@ -91,15 +91,11 @@ type Node =
           | :? Node as y -> compare x y
           | _ -> invalidArg "yobj" "cannot compare values of different types" 
 
-and Pin =
-    | Pinned
-    | Unpinned
-
 and LambdaDetail = {
     ArgSymbols  : Node list
     Body        : Node list
 }                    
-and Environment = Map<string, Pin * Node>
+and Environment = Map<string, Node>
 and Thunk =
     | Continue of (unit -> Thunk)
     | Final    of Node
