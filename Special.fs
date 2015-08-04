@@ -5,6 +5,8 @@ open Ast
 
 module private BuiltIn =
 
+    let (|>!) a b = b a; a
+
     let rec eval (env: Environment, n: Node, td) : Thunk =
         match n with
         | Unit _
@@ -128,7 +130,8 @@ module private BuiltIn =
                 Node.List(h :: tail, td)
             | [] -> failwith "cannot transform nothing"
 
-        Thunk.Final(transform nl)
+        let v = transform nl
+        Thunk.Final(v)
 
     let tryWith (env: Environment, nl: Node list, td: TokenData) : Thunk =
         match nl with
@@ -165,19 +168,20 @@ module Symbol =
                 | None -> failwith (sprintf "symbol %s not found" s)
             | _                     -> failwith (sprintf "forget requires exactly one symbol argument")
 
-        // add a symbol to an environment
-        let add2env (env: Environment, nl: Node list, td: TokenData) : Thunk =
+        // print current environment
+        let printEnv (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
-            | Node.Env env :: Node.Symbol (s, td) :: n :: [] -> 
-                match env.TryFind s with
-                | Some v -> Thunk.Final (Env (env.Remove s))
-                | None -> failwith (sprintf "symbol %s not found" s)
-            | _                     -> failwith (sprintf "Error: add2env <env> <symbol> <body>")
+            | Node.Unit _ :: []     -> env |> Seq.toArray |> Array.map (fun kv -> kv.Key) |> Array.iter (printfn "%s"); Thunk.Final (Node.Unit td)
+            | _                     -> failwith (sprintf "Error: env.print ()")
 
 open BuiltIn
 
 let _eval (env: Environment, nl: Node list, td: TokenData) : Thunk  =
-    eval (env, (Node.List (nl, td)), td)
+    match nl with
+    | n :: [] ->
+        let v = (eval (env, n, td)).Value
+        Thunk.Final v
+    | _                        -> failwith (sprintf "Error: eval (el0 ...)")
 
 let getBuiltIns =
     [|
@@ -190,6 +194,7 @@ let getBuiltIns =
         "assign",           Node.Special Symbol.assign
         "forget",           Node.Special Symbol.forget
         "try",              Node.Special tryWith
+        "env.print",        Node.Special Symbol.printEnv
     |]
     |> Map.ofArray
 

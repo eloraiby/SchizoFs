@@ -1,5 +1,10 @@
 ﻿{
     (lambda (x) {
+
+        io.write (eval (quote define xxxx 10));
+        io.write xxxx;
+        env.print ();
+
         define let (macro (name eqOp body) {
             io.write name;
             io.write eqOp;
@@ -36,7 +41,11 @@
 
         //io.write eqOp;
         return x;
-        //io.write "reached this\n";
+        io.write "reached this\n";
+
+        io.write (eval (quote (define xxxx 10)));
+        io.write xxxx;
+        env.print ();
 
         // f2[10][13];
     }) 13;
