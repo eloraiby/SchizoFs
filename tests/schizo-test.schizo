@@ -2,18 +2,19 @@
     (lambda (x) {
 
         io.write (eval (quote define xxxx 10));
+        eval (eval (quote define xxxx 10));
         io.write xxxx;
         env.print ();
 
-        define let (macro (name eqOp body) {
-            io.write name;
-            io.write eqOp;
-            io.write body;
-            if (string.eq? (symbol.to_string eqOp) "=")
-            then {
-                quote define (unquote name) (unquote body);
-            } else { (); };
-        });
+        //define let (macro (name eqOp body) {
+        //    io.write name;
+        //    io.write eqOp;
+        //    io.write body;
+        //    if (string.eq? (symbol.to_string eqOp) "=")
+        //    then {
+        //        quote define (unquote name) (unquote body);
+        //    } else { (); };
+        //});
 
         //define   h "hello";
         //io.write h;       
@@ -31,21 +32,21 @@
         
         //ab ();
 
-        let f3 = (lambda() {
-            io.write "I am 3";
-            let ab = (real64.add -5.3 4.7);
-            io.write ab; 
-        });
-        
-        f3 ();
+        //let f3 = (lambda() {
+        //    io.write "I am 3";
+        //    let ab = (real64.add -5.3 4.7);
+        //    io.write ab; 
+        //});
+        //
+        //f3 ();
+        //
+        ////io.write eqOp;
+        //return x;
+        //io.write "reached this\n";
 
-        //io.write eqOp;
-        return x;
-        io.write "reached this\n";
-
-        io.write (eval (quote (define xxxx 10)));
-        io.write xxxx;
-        env.print ();
+        //io.write (eval (quote (define xxxx 10)));
+        //io.write xxxx;
+        //env.print ();
 
         // f2[10][13];
     }) 13;

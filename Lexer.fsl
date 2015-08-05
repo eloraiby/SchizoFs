@@ -46,12 +46,12 @@ let floatp  = digit+ '.' digit*
 let floate  = digit+ ('.' digit* )? ('e'| 'E') ['+' '-']? digit+
 let real64  = ['-' '+']? (floatp | floate)
 let white	= [' ' '\t']+
-let newline = '\r' | '\n' | "\r\n"
+let newlineS = '\r' | '\n' | "\r\n"
 
 rule read filename istream =
 	parse
 	| white         { read filename istream lexbuf }
-	| newline       { newline lexbuf; read filename istream lexbuf }
+	| newlineS       { newline lexbuf; read filename istream lexbuf }
 	| real64        { REAL64    (Real64Node     (float (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| int64         { INT64     (SInt64Node     (int64 (lexeme lexbuf)) (positionToTuple(filename, lexbuf.StartPos))) }
 	| "true"        { TRUE      (BoolNode       true                    (positionToTuple(filename, lexbuf.StartPos))) }
@@ -80,6 +80,6 @@ and read_string filename istream str ignorequote =
 
 and read_line_comment filename istream =
     parse
-    | newline       { read filename istream lexbuf }
+    | newlineS       { read filename istream lexbuf }
     | _             { read_line_comment filename istream lexbuf }
 { }

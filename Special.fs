@@ -7,7 +7,7 @@ module private BuiltIn =
 
     let (|>!) a b = b a; a
 
-    let rec eval (env: Environment, n: Node, td) : Thunk =
+    let rec eval (env: Environment, n: Node) : Thunk =
         match n with
         | Unit _
         | Bool _
@@ -23,10 +23,10 @@ module private BuiltIn =
         | Function _  -> Thunk.Final n
         | Symbol (s, td)    ->
             match env.TryFind s with
-            | Some v -> Thunk.Final ((eval (env, v, td)).Value) // evaluate lazily (macro language/late binding)
+            | Some v -> Thunk.Final ((eval (env, v)).Value) // evaluate lazily (macro language/late binding)
             | None   -> Thunk.Final n
         | List (h :: t, td)     ->
-            match (eval (env, h, td)).Value with
+            match (eval (env, h)).Value with
             | FFI f     -> Thunk.Final (f (evalList td (env, t), td))
             | Special f -> f (env, t, td)
             | Macro    ({ ArgSymbols = syms; Body = body }, td) -> applyMacro    (syms, body, env, t, td)
@@ -37,7 +37,7 @@ module private BuiltIn =
 
     and evalList td (env: Environment, nl: Node list) =
         nl
-        |> List.map(fun n -> (eval (env, n, td)).Value)
+        |> List.map(fun n -> (eval (env, n)).Value)
      
     and getSymbolList (nl: Node list) =
         nl
@@ -73,7 +73,7 @@ module private BuiltIn =
         let ret = ret.Value
         match ret with
         | Node.List(l, td) ->
-            match (eval (origEnv, ret, td)).Value with
+            match (eval (origEnv, ret)).Value with
             | Node.Env e -> Thunk.Final (Env e)
             | _ -> failwith "macro requires the last statement to be evaluated to env type"
 
@@ -95,12 +95,12 @@ module private BuiltIn =
                         match last with
                         | Node.Env env -> env
                         | _            -> env
-                    env, eval (env, n, td)) (env, Thunk.Final(Node.Unit TokenData.Empty))
+                    env, eval (env, n)) (env, Thunk.Final(Node.Unit TokenData.Empty))
 
     let if_then_else (env: Environment, nl: Node list, td: TokenData) : Thunk =
         match nl with
         | cond :: Node.Symbol ("then", _) :: Node.List(thenBody, _) :: Node.Symbol ("else", _) :: Node.List(elseBody, _) :: [] ->
-            match (eval (env, cond, td)).Value with
+            match (eval (env, cond)).Value with
             | Node.Bool (true, _)    -> evalBody td (env, thenBody) |> snd
             | Node.Bool (flase, _)   -> evalBody td (env, elseBody) |> snd
             | x                      -> failwith (sprintf "if expression @ line %d, column %d expects a boolean condition, got %A" td.LineNumber td.Column x)
@@ -118,7 +118,7 @@ module private BuiltIn =
             match n with
             | Symbol ("unquote", td) :: t ->
                 match t with
-                | h :: tt  -> (eval (env, h, td)).Value
+                | h :: tt  -> (eval (env, h)).Value
                 | []       -> failwith "unquote requires arguments!"
             | h :: t ->
                 let tail =
@@ -140,7 +140,7 @@ module private BuiltIn =
            
             let v = ret.Value
             match ret.Value with
-            | Node.Except (n, td) -> Thunk.Continue (fun _ -> eval (env.Add(sym, n), withBody, td))
+            | Node.Except (n, td) -> Thunk.Continue (fun _ -> eval (env.Add(sym, n), withBody))
             | _ -> Thunk.Final v
         | _ -> failwith "try ... with ... syntax error"
          
@@ -155,7 +155,7 @@ module Symbol =
         let assign (env: Environment, nl: Node list, td: TokenData) : Thunk =
             match nl with
             | Node.Symbol (s, _) :: n :: [] ->
-                let n = BuiltIn.eval (env, n, td)
+                let n = BuiltIn.eval (env, n)
                 Thunk.Final(Node.Env (env.Add(s, n.Value)))
             | x -> failwith (sprintf "define @ line %d, column %d expected to have a symbol and an expression, got %A" td.LineNumber td.Column x)
 
@@ -179,8 +179,11 @@ open BuiltIn
 let _eval (env: Environment, nl: Node list, td: TokenData) : Thunk  =
     match nl with
     | n :: [] ->
-        let v = (eval (env, n, td)).Value
-        Thunk.Final v
+        // first evaluate the arguments
+        let args  = (eval (env, n)).Value
+        // then evaluate the value
+        let value = (eval (env, args)).Value
+        Thunk.Final value
     | _                        -> failwith (sprintf "Error: eval (el0 ...)")
 
 let getBuiltIns =
